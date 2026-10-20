@@ -48,6 +48,8 @@ function loadManual() {
 
 const state = {
   data: null,
+  branchFilter: { region: '', chain: '', q: '', ...store.get('branchFilter', {}) },
+  branchLimit: 20,
   loading: false,
   metal: store.get('metal', 'gold') === 'silver' ? 'silver' : 'gold',
   size: { gold: 100, silver: 1000, ...store.get('size', {}) },
@@ -173,6 +175,7 @@ function render() {
   renderTiles();
   renderChart();
   renderShops();
+  renderBranches();
   renderFinder();
   renderPerGram();
   renderManualList();
@@ -305,14 +308,32 @@ function buyWithVat(shop, price) {
   return shop.buyVatIncluded ? price : Math.round(price * (1 + state.settings.vatRate));
 }
 
+/** K-금은거래소처럼 품목별 매입시세를 공개하는 곳은 한 줄로 보여 줍니다. */
+function buybackNote(shop) {
+  const items = shop.buyback?.[state.metal];
+  if (!items?.length) return null;
+  const short = items.slice(0, 3).map((i) => `${i.label.replace(/\(.*?\)/g, '').trim()} ${num(i.price)}`);
+  return h('div', { class: 'cell-note' }, `품목별 매입: ${short.join(' · ')}`);
+}
+
 function renderShops() {
   const shops = state.data.shops ?? [];
   const isGold = state.metal === 'gold';
   const key = isGold ? 'gold24k' : 'silver';
   const unit = isGold ? '순금 1돈' : '은 3.75g';
-  const rows = shops.filter((s) => s.prices?.[key]?.buy || s.prices?.[key]?.sell);
+  const withPrice = shops.filter((s) => s.prices?.[key]?.buy || s.prices?.[key]?.sell);
+  // 살 때 싼 순서 (참고값·살 때 없는 곳은 뒤로, 그 안에서는 팔 때 높은 순)
+  const sortKey = (s) => {
+    const p = s.prices[key];
+    return p.buy && !s.buyIsReference ? [0, buyWithVat(s, p.buy)] : [1, -(p.sell ?? 0)];
+  };
+  const rows = [...withPrice].sort((a, b) => {
+    const [ga, va] = sortKey(a);
+    const [gb, vb] = sortKey(b);
+    return ga - gb || va - vb;
+  });
 
-  $('#shops-sub').textContent = `서울 종로·강남, 부산 매장과 금 매입 플랫폼이 매일 고시하는 ${unit} 가격입니다. 매장마다 매일 시세가 바뀝니다.`;
+  $('#shops-sub').textContent = `금거래소·금은방 ${withPrice.length}곳이 매일 고시하는 ${unit} 가격입니다 (서울 종로·강남, 부산 등). 살 때 가격이 싼 순서로 보여 줍니다.`;
 
   // 살 때 최저(참고값 제외, 부가세 포함으로 맞춤) · 팔 때 최고
   const buyable = rows.filter((s) => s.prices[key].buy && !s.buyIsReference);
@@ -370,7 +391,13 @@ function renderShops() {
       return h(
         'tr',
         null,
-        h('td', null, link(s.url, s.name), h('div', { class: 'cell-note' }, s.region)),
+        h(
+          'td',
+          null,
+          link(s.url, s.name),
+          h('div', { class: 'cell-note' }, s.region),
+          buybackNote(s),
+        ),
         h('td', { class: 'num', 'data-label': `살 때 (${unit})` }, buyCell),
         h('td', { class: 'num', 'data-label': `팔 때 (${unit})` }, sellCell),
         isGold
@@ -384,6 +411,73 @@ function renderShops() {
   $('#shops-foot').textContent = isGold
     ? '살 때는 부가세 포함 가격입니다. 18K·14K는 살 때 가격이 제품마다 달라 팔 때만 보여 줍니다. 실제 매입가는 순도 감정 후 정해지고, 골드바는 제작비가 붙을 수 있어요.'
     : '은은 3.75g 기준 고시가입니다. 실버바는 아래 "최저가 찾기"에서 무게별로 비교하세요.';
+}
+
+// ---------- 전국 매장 찾기 ----------
+const REGION_ORDER = ['서울', '경기', '인천', '부산', '대구', '대전', '광주', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
+
+function branchMatches(b, f) {
+  if (f.region && b.region !== f.region) return false;
+  if (f.chain && b.chain !== f.chain) return false;
+  if (f.q) {
+    const hay = `${b.chainName} ${b.name} ${b.address ?? ''}`.toLowerCase();
+    if (!f.q.toLowerCase().split(/\s+/).every((w) => hay.includes(w))) return false;
+  }
+  return true;
+}
+
+function fillSelect(sel, options, current) {
+  const keep = sel.dataset.ready === current;
+  sel.replaceChildren(...options.map(([value, label]) => h('option', { value, selected: value === current }, label)));
+  sel.dataset.ready = keep ? current : '';
+}
+
+function renderBranches() {
+  const all = state.data.branches ?? [];
+  const f = state.branchFilter;
+  const section = $('#branches-section');
+  section.hidden = !all.length;
+  if (!all.length) return;
+
+  const count = (pred) => all.filter(pred).length;
+  fillSelect(
+    $('#branch-region'),
+    [['', `전국 (${all.length})`], ...REGION_ORDER.map((r) => [r, `${r} (${count((b) => b.region === r)})`]).filter(([, l]) => !l.endsWith('(0)'))],
+    f.region,
+  );
+  const chains = [...new Map(all.map((b) => [b.chain, b.chainName])).entries()];
+  fillSelect($('#branch-chain'), [['', '모든 업체'], ...chains.map(([id, name]) => [id, `${name} (${count((b) => b.chain === id)})`])], f.chain);
+  if ($('#branch-q').value !== f.q) $('#branch-q').value = f.q;
+
+  const list = all.filter((b) => branchMatches(b, f));
+  $('#branches-count').textContent = `${list.length}곳`;
+  const shown = list.slice(0, state.branchLimit);
+  const items = shown.map((b) => {
+    const mapQuery = b.address ?? `${b.chainName} ${b.name}`;
+    return h(
+      'li',
+      { class: 'card branch' },
+      h(
+        'div',
+        { class: 'branch-head' },
+        h('strong', null, b.name.startsWith(b.chainName.slice(0, 3)) ? b.name : `${b.chainName} ${b.name}`),
+        b.opening ? h('span', { class: 'badge soft' }, '오픈 예정') : null,
+      ),
+      h('div', { class: 'branch-meta' }, b.region ? `${b.region} · ` : '', b.address ?? '주소는 업체에 문의 (홈페이지에 지사명만 공개)'),
+      b.hours ? h('div', { class: 'branch-meta' }, `영업시간 ${b.hours}`) : null,
+      h(
+        'div',
+        { class: 'branch-links' },
+        b.phone ? h('a', { href: `tel:${b.phone.replace(/[^0-9]/g, '')}` }, `전화 ${b.phone}`) : null,
+        h('a', { href: `https://map.naver.com/p/search/${encodeURIComponent(mapQuery)}`, target: '_blank', rel: 'noopener noreferrer' }, '지도 보기 ↗'),
+        link(b.url, `${b.chainName} 홈페이지 ↗`),
+      ),
+    );
+  });
+  $('#branches-list').replaceChildren(...(items.length ? items : [h('li', { class: 'card empty' }, '조건에 맞는 매장이 없습니다.')]));
+  const more = $('#branches-more');
+  more.hidden = list.length <= state.branchLimit;
+  more.textContent = `${Math.min(20, list.length - state.branchLimit)}곳 더 보기 (남은 ${list.length - state.branchLimit}곳)`;
 }
 
 function renderFinder() {
@@ -584,7 +678,7 @@ function renderSources() {
     }),
   );
   $('#not-covered').textContent =
-    '자동으로 모으지 못하는 곳: KB국민·신한·우리·NH농협 은행 골드바, 한국표준금거래소 본사 시세(해외 접속 차단, 국내에서 실행하면 수집), 개별 동네 금은방. 이런 곳의 가격은 "내가 받은 견적 비교하기"에 넣으면 함께 비교됩니다.';
+    '자동으로 모으지 못하는 곳: KB국민·신한·우리·NH농협 은행 골드바, 한국표준금거래소 본사 시세(해외 접속 차단, 국내에서 실행하면 수집), 순금나라·한국금거래소 소매 사이트(접속 차단), 홈페이지가 없는 동네 금은방. 이런 곳의 가격은 "내가 받은 견적 비교하기"에 넣으면 함께 비교됩니다.';
 }
 
 // ---------- 이벤트 ----------
@@ -606,6 +700,22 @@ for (const btn of document.querySelectorAll('.qty [data-step]')) {
 }
 
 $('#refresh').addEventListener('click', () => load(true));
+
+// 매장 찾기 필터
+function setBranchFilter(patch) {
+  state.branchFilter = { ...state.branchFilter, ...patch };
+  state.branchLimit = 20;
+  store.set('branchFilter', state.branchFilter);
+  renderBranches();
+}
+$('#branch-region').addEventListener('change', (e) => setBranchFilter({ region: e.target.value }));
+$('#branch-chain').addEventListener('change', (e) => setBranchFilter({ chain: e.target.value }));
+$('#branch-q').addEventListener('input', (e) => setBranchFilter({ q: e.target.value.trim() }));
+$('#branches-more').addEventListener('click', () => {
+  state.branchLimit += 20;
+  renderBranches();
+});
+
 
 $('#pergram-more').addEventListener('click', () => {
   state.showAllPerGram = !state.showAllPerGram;

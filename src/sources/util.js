@@ -62,3 +62,57 @@ export function parseCafe24List(html, baseUrl) {
   });
   return products;
 }
+
+/**
+ * 화면에 보이는 글자를 조각(토큰) 목록으로 나눕니다. 태그가 바뀔 때마다 한 조각입니다.
+ * 표가 아닌 div로 시세를 그리는 사이트도 "살 때 → 값들 → 팔 때 → 값들" 순서로 읽을 수 있게 합니다.
+ */
+export function flatTokens(html) {
+  const $ = load(html);
+  $('script,style,noscript,svg,head').remove();
+  const out = [];
+  const walk = (node) => {
+    for (const c of node.children ?? []) {
+      if (c.type === 'text') {
+        const t = c.data.replace(/\s+/g, ' ').trim();
+        if (t) out.push(t);
+      } else if (c.type === 'tag') walk(c);
+    }
+  };
+  walk($.root()[0]);
+  return out;
+}
+
+export const PHONE_RE = /(?:0\d{1,2}|1\d{3})-\d{3,4}(?:-\d{4})?/;
+
+const REGION_PREFIXES = [
+  ['서울', '서울'], ['경기', '경기'], ['인천', '인천'], ['부산', '부산'], ['대구', '대구'], ['대전', '대전'],
+  ['광주', '광주'], ['울산', '울산'], ['세종', '세종'], ['강원', '강원'], ['제주', '제주'],
+  ['충북', '충북'], ['충청북', '충북'], ['충남', '충남'], ['충청남', '충남'],
+  ['전북', '전북'], ['전라북', '전북'], ['전남', '전남'], ['전라남', '전남'],
+  ['경북', '경북'], ['경상북', '경북'], ['경남', '경남'], ['경상남', '경남'],
+];
+export const REGIONS = ['서울', '경기', '인천', '부산', '대구', '대전', '광주', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
+
+// 시·도 없이 도시 이름으로만 시작하는 주소("창원시 의창구 …")용
+const CITY_REGION = {
+  창원: '경남', 마산: '경남', 김해: '경남', 양산: '경남', 진주: '경남', 거제: '경남', 밀양: '경남', 통영: '경남', 사천: '경남',
+  구미: '경북', 경산: '경북', 포항: '경북', 안동: '경북', 경주: '경북', 영주: '경북',
+  청주: '충북', 충주: '충북', 제천: '충북', 천안: '충남', 아산: '충남', 서산: '충남', 당진: '충남',
+  전주: '전북', 익산: '전북', 군산: '전북', 완주: '전북', 순천: '전남', 여수: '전남', 목포: '전남', 광양: '전남',
+  수원: '경기', 성남: '경기', 고양: '경기', 용인: '경기', 부천: '경기', 안산: '경기', 안양: '경기', 평택: '경기', 시흥: '경기',
+  화성: '경기', 의정부: '경기', 김포: '경기', 하남: '경기', 구리: '경기', 춘천: '강원', 원주: '강원', 강릉: '강원',
+};
+
+/** 주소(또는 지역 표기)의 맨 앞 글자로 17개 시·도 중 하나를 고릅니다. 모르면 fallback */
+export function toRegion(address, fallback = null) {
+  const a = String(address ?? '').trim();
+  for (const [prefix, region] of REGION_PREFIXES) if (a.startsWith(prefix)) return region;
+  const city = Object.keys(CITY_REGION).find((c) => a.startsWith(c));
+  if (city) return CITY_REGION[city];
+  if (fallback) {
+    const f = toRegion(fallback, null);
+    if (f) return f;
+  }
+  return null;
+}
