@@ -1,0 +1,208 @@
+<!doctype html><html><head><meta charset="utf-8"><title>ksgold-stores</title></head><body>
+<!-- 실제 페이지에서 필요한 부분만 남긴 샘플 (2026-10-20) -->
+<script>
+const storesData = {
+    yongho: {
+        name: '부산 용호 본점',
+        lat: 35.128054,
+        lng: 129.107943,
+        address: '부산 남구 분포로 113 1층 대한표준금거래소',
+        phone: '070-7575-4415',
+        parking: '주차가능',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/branch1.jpg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%9A%A9%ED%98%B8%EC%A0%90/place/1470257391?c=15.00,0,0,0,dh&isCorrectAnswer=true&placePath=/home?from=map&fromPanelNum=1&additionalHeight=76&timestamp=202509240038&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%9A%A9%ED%98%B8%EC%A0%90'
+    },
+    guseo: {
+        name: '부산 구서점',
+        lat: 35.247206,
+        lng: 129.090111,
+        address: '부산 금정구 수림로50번길 178 1층 내 제조표61580호',
+        phone: '051-921-2249',
+        parking: '주차가능',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/branch2.jpg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EA%B5%AC%EC%84%9C%EC%A0%90/place/1495935476?c=15.00,0,0,0,dh&isCorrectAnswer=true&placePath=/home?from=map&fromPanelNum=1&additionalHeight=76&timestamp=202509240054&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EA%B5%AC%EC%84%9C%EC%A0%90'
+    },
+    gimpo: {
+        name: '김포 라베니체점',
+        lat: 37.638606,
+        lng: 126.677503,
+        address: '경기 김포시 태장로 820-32 라베니체9차 107호',
+        phone: '031-985-8259',
+        parking: '주차가능',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/branch3.jpg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EB%9D%BC%EB%B2%A0%EB%8B%88%EC%B2%B4%EC%A0%90/place/1814392980?c=20.00,0,0,0,dh&isCorrectAnswer=true&placePath=/home?from=map&fromPanelNum=1&additionalHeight=76&timestamp=202509240056&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EB%9D%BC%EB%B2%A0%EB%8B%88%EC%B2%B4%EC%A0%90'
+    },
+    jaesong: {
+        name: '부산 재송점',
+        lat: 35.187142,
+        lng: 129.125690,
+        address: '부산 해운대구 재반로 96-2 대한표준금거래소 재송점',
+        phone: '051-916-4848',
+        parking: '주차가능',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/branch4.jpg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%9E%AC%EC%86%A1%EC%A0%90/place/1154026400?c=20.00,0,0,0,dh&isCorrectAnswer=true&placePath=/home?from=map&fromPanelNum=1&additionalHeight=76&timestamp=202509240100&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%9E%AC%EC%86%A1%EC%A0%90'
+    },
+    gyeongsan: {
+        name: '경산 사동점',
+        lat: 35.811799,
+        lng: 128.755014,
+        address: '경상북도 경산시 사동38 1층',
+        phone: '010-2123-1163',
+        parking: '주차가능',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/branch5.jpg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%82%AC%EB%8F%99%EC%A0%90/place/1288698918?c=20.00,0,0,0,dh&isCorrectAnswer=true&placePath=/home?from=map&fromPanelNum=1&additionalHeight=76&timestamp=202509240103&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%82%AC%EB%8F%99%EC%A0%90'
+    },
+    dongsam: {
+        name: '부산 동삼점',
+        lat: 35.076644,
+        lng: 129.071573,
+        address: '부산시 영도구 동삼로34 1층 대한표준금거래소',
+        phone: '010-3782-4811',
+        parking: '주차불가능',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/branch6.jpg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EB%8F%99%EC%82%BC%EC%A0%90/place/1392812725?c=20.00,0,0,0,dh&isCorrectAnswer=true'
+    },
+    banpo: {
+        name: '서울 반포점',
+        lat: 37.507115,
+        lng: 127.009873,
+        address: '서울 서초구 잠원로 24 131호',
+        phone: '010-7737-6886',
+        parking: '주차가능',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/ks_logo_ko.jpeg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EB%B0%98%ED%8F%AC%EC%A0%90/place/2039872711?c=15.00,0,0,0,dh&isCorrectAnswer=true&placePath=/home?fromPanelNum=1&additionalHeight=76&timestamp=202511192157&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EB%B0%98%ED%8F%AC%EC%A0%90&fromPanelNum=1&additionalHeight=76&timestamp=202511192157&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EB%B0%98%ED%8F%AC%EC%A0%90'
+    },
+    ulsan_seongnam: {
+        name: '울산 성남점',
+        lat: 35.554095,
+        lng: 129.321882,
+        address: '울산 중구 젊음의거리 86 1층',
+        phone: '010-8655-8900',
+        parking: '주차가능',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/ksgold-seongnam.jpeg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%84%B1%EB%82%A8%EC%A0%90/place/2060793190?c=15.00,0,0,0,dh&isCorrectAnswer=true&placePath=/home?from=map&from=map&fromPanelNum=1&additionalHeight=76&timestamp=202511192205&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%84%B1%EB%82%A8%EC%A0%90&from=map&fromPanelNum=1&additionalHeight=76&timestamp=202511192205&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%84%B1%EB%82%A8%EC%A0%90'
+    },
+    ulsan_sincheon: {
+        name: '울산 신천점',
+        lat: 35.6344466,
+        lng: 129.3490373,
+        address: '울산 북구 매곡로 7 1층',
+        phone: '0507-1394-9084',
+        parking: '주차가능',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/ksgold-sincheon.jpeg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%8B%A0%EC%B2%9C%EC%A0%90/place/2017333953?c=18.36,0,0,0,dh&isCorrectAnswer=true&placePath=/home?fromPanelNum=1&additionalHeight=76&timestamp=202511192207&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%8B%A0%EC%B2%9C%EC%A0%90&fromPanelNum=1&additionalHeight=76&timestamp=202511192207&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%8B%A0%EC%B2%9C%EC%A0%90'
+    },
+    gaegeum: {
+        name: '부산 개금점',
+        lat: 35.1534250,
+        lng: 129.0250250,
+        address: '부산 부산진구 가야대로 485',
+        phone: '010-9270-6930',
+        parking: '주차가능',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/ksgold-gaegeum.jpeg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EA%B0%9C%EA%B8%88%EC%A0%90/place/2050724452?c=15.00,0,0,0,dh&isCorrectAnswer=true&placePath=/home?from=map&fromPanelNum=1&additionalHeight=76&timestamp=202511192254&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EA%B0%9C%EA%B8%88%EC%A0%90'
+    },
+    yongdam: {
+        name: '청주 용담점',
+        lat: 36.6321358466008,
+        lng: 127.505288442061,
+        address: '충북 청주시 상당구 산성로112번길 10 1층 101호',
+        phone: '0507-1366-4991',
+        parking: '주차가능',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/ksgold-yongdam.jpeg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%9A%A9%EB%8B%B4/place/2035333021?c=15.00,0,0,0,dh&isCorrectAnswer=true&placePath=/home?fromPanelNum=1&additionalHeight=76&timestamp=202511192313&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%9A%A9%EB%8B%B4&additionalHeight=76&timestamp=202511192313&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%9A%A9%EB%8B%B4&fromPanelNum=1'
+    },
+    suyeong: {
+        name: '부산 수영점',
+        lat: 35.1680260,
+        lng: 129.1167015,
+        address: '부산광역시 수영구 수영로 707(수영동)',
+        phone: '0507-1423-4811',
+        parking: '주차가능',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/ksgold-suyeong.jpeg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%88%98%EC%98%81%EC%A0%90/place/2071168876?c=15.00,0,0,0,dh&isCorrectAnswer=true&placePath=/information?fromPanelNum=1&additionalHeight=76&timestamp=202511241541&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%88%98%EC%98%81%EC%A0%90&additionalHeight=76&timestamp=202511241541&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%88%98%EC%98%81%EC%A0%90&fromPanelNum=1'
+    },
+    samsan: {
+        name: '울산 삼산점',
+        lat: 35.5401888,
+        lng: 129.3361683,
+        address: '울산 남구 삼산동 1522-1(삼산동)',
+        phone: '0507-1433-2452',
+        parking: '무료주차가능(소형차한정)',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/ksgold-samsan.jpeg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%82%BC%EC%82%B0%EC%A0%90/place/2071168876?c=15.00,0,0,0,dh&isCorrectAnswer=true&placePath=/information?fromPanelNum=1&additionalHeight=76&timestamp=202511241541&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%82%BC%EC%82%B0%EC%A0%90&additionalHeight=76&timestamp=202511241541&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%82%BC%EC%82%B0%EC%A0%90&fromPanelNum=1'
+    },
+    dongrae: {
+        name: '부산 동래점',
+        lat: 35.2050361,
+        lng: 129.077639,
+        address: '부산 동래구 중앙대로 1319 1층 대한표준금거래소',
+        phone: '0507-1323-7660',
+        parking: '주차가능(유료)',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/ks-dongrae.jpeg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%EB%8F%99%EB%9E%98%EC%A0%90/place/2027418381?c=15.00,0,0,0,dh&isCorrectAnswer=true&placePath=/home?from=map&fromPanelNum=1&additionalHeight=76&timestamp=202605051201&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%EB%8F%99%EB%9E%98%EC%A0%90'
+    },
+    anrak: {
+        name: '부산 안락점',
+        lat: 35.2016869,
+        lng: 129.1003206,
+        address: '부산 동래구 명장로20번길 101 1층 대한표준금거래소',
+        phone: '0507-1317-3750',
+        parking: '주차가능(유료)',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/ksgold-anrak.jpeg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%EC%95%88%EB%9D%BD%EC%A0%90/place/2072946726?c=15.00,0,0,0,dh&isCorrectAnswer=true&placePath=/home?from=map&fromPanelNum=1&additionalHeight=76&timestamp=202605051201&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%EC%95%88%EB%9D%BD%EC%A0%90'
+    },
+    dongdaesin: {
+        name: '부산 동대신점',
+        lat: 35.1134541,
+        lng: 129.0162185,
+        address: '부산 서구 구덕로334번길 6 1층대한표준금거래소',
+        phone: '0507-1332-9447',
+        parking: '주차가능(유료)',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/ks_logo_ko.jpeg',
+        naverMapUrl: 'https://map.naver.com/p/entry/place/2017518053?c=15.00,0,0,0,dh&isCorrectAnswer=true&placePath=/information?from=map&fromPanelNum=1&additionalHeight=76&timestamp=202605051157&locale=ko&svcName=map_pcv5&from=map&fromPanelNum=1&additionalHeight=76&timestamp=202605051148&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%20%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EB%8F%99%EB%8C%80%EC%8B%A0%EC%A0%90'
+    },
+    eomgung: {
+        name: '부산 엄궁점',
+        lat: 35.1309739,
+        lng: 128.9725915,
+        address: '부산 사상구 낙동대로 790 1층 104호 대한표준금거래소',
+        phone: '0507-1321-0085',
+        parking: '주차가능(유료)',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/ks_logo_ko.jpeg',
+        naverMapUrl: 'https://map.naver.com/p/search/%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%20%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%97%84%EA%B6%81%EC%A0%90/place/2034124555?c=15.00,0,0,0,dh&isCorrectAnswer=true&placePath=/home?from=map&fromPanelNum=1&additionalHeight=76&timestamp=202605051158&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%20%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%97%84%EA%B6%81%EC%A0%90'
+    },
+    choryang: {
+        name: '부산 초량점',
+        lat: 35.1203734,
+        lng: 129.0401543,
+        address: '부산 동구 초량중로 98-1 내제조표동 8152호',
+        phone: '0507-1461-3008',
+        parking: '주차불가능',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/ksgold-choryang.jpeg',
+        naverMapUrl: 'https://map.naver.com/p/entry/place/2099460649?c=15.00,0,0,0,dh&isCorrectAnswer=true&placePath=/home&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%B4%88%EB%9F%89%EC%A0%90'
+    },
+    sangin: {
+        name: '대구 상인점',
+        lat: 35.8166186,
+        lng: 128.5318629,
+        address: '대구 달서구 월배로 164 102호',
+        phone: '0507-1346-0272',
+        parking: '주차가능',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/ksgold-sangin.jpeg',
+        naverMapUrl: 'https://map.naver.com/p/entry/place/2091519288?c=15.00,0,0,0,dh&isCorrectAnswer=true&placePath=/home&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%83%81%EC%9D%B8%EC%A0%90'
+    },
+    daegu_branch_office: {
+        name: '대구지사',
+        lat: 35.8166186,
+        lng: 128.5318629,
+        address: '대구 달서구 월배로 164 102호',
+        phone: '0507-1346-0272',
+        parking: '주차가능',
+        image: 'http://www.ksgold.co.kr/theme/ai_theme/img/pages/stores/ks_logo_ko.jpeg',
+        naverMapUrl: 'https://map.naver.com/p/entry/place/2091519288?c=15.00,0,0,0,dh&isCorrectAnswer=true&placePath=/home&locale=ko&svcName=map_pcv5&searchText=%EB%8C%80%ED%95%9C%ED%91%9C%EC%A4%80%EA%B8%88%EA%B1%B0%EB%9E%98%EC%86%8C%20%EC%83%81%EC%9D%B8%EC%A0%90'
+    },
+
+};
+</script>
+</body></html>

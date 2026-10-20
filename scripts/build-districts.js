@@ -76,12 +76,12 @@ export function buildDistricts(geojson) {
     if (base || latlng) out.set(`${region} ${name}`, { region, district: name, ...(latlng ?? { lat: base.lat, lng: base.lng }) });
   };
   alias('인천', '미추홀구', '남구');
-  // 2026년 7월 인천 개편: 중구·동구 → 제물포구(내륙)·영종구(영종도), 서구 북부 → 검단구
-  const incheonJung = out.get('인천 중구'); // 가장 큰 땅덩이 = 영종도
-  alias('인천', '영종구', '중구');
+  // 2026년 7월 인천 개편: 중구·동구 → 제물포구(내륙)·영종구(영종도), 서구 → 서해구·검단구
+  alias('인천', '영종구', '중구'); // 중구의 가장 큰 땅덩이 = 영종도
   alias('인천', '제물포구', '동구');
-  if (incheonJung) alias('인천', '중구', '동구'); // 옛 주소의 "중구"는 대부분 원도심(신포동 일대)이라 동구 쪽으로 봅니다
+  alias('인천', '중구', '동구'); // 옛 주소의 "중구"는 대부분 원도심(신포동 일대)이라 동구 쪽으로 봅니다
   alias('인천', '검단구', null, { lat: 37.5985, lng: 126.6629 }); // 검단신도시 일대
+  alias('인천', '서해구', null, { lat: 37.5300, lng: 126.6650 }); // 검단을 뺀 옛 서구 (청라·가정 일대)
 
   return [...out.values()].sort((a, b) => a.region.localeCompare(b.region, 'ko') || a.district.localeCompare(b.district, 'ko'));
 }

@@ -6,6 +6,7 @@
 import { load } from 'cheerio';
 import { fetchText, toNumber } from '../http.js';
 import { productOffers, shopQuoteOffer } from './shops.js';
+import { guessRegion, parseAddress } from '../../shared/location.js';
 import { cheapestBySize, detectMetal, flatTokens, parseKoreanDate, parseProductWeight, PHONE_RE, REGIONS, toRegion } from './util.js';
 
 const METAL_KEYS = ['gold24k', 'gold18k', 'gold14k', 'platinum', 'silver'];
@@ -366,6 +367,161 @@ export function parseJongroBranches(tokens) {
   return out;
 }
 
+// ---------- 시세: 사업자별 전용 형식 ----------
+
+const firstPrice = (text) => {
+  const m = /\d{1,3}(?:,\d{3})+|\d+/.exec(String(text ?? '').replace(/\s+/g, ' '));
+  const n = m ? Number(m[0].replace(/,/g, '')) : null;
+  return n > 0 ? n : null; // "제품시세적용", "-"는 null
+};
+
+/**
+ * 한국금시장거래소(koreagold.kr): div 다섯 칸(순금·18K·14K·백금·은)마다 [이름, 살 때, 팔 때].
+ * 값 옆의 변동폭(<p>)은 떼고 읽습니다. 화면에 날짜가 없어 date는 null입니다.
+ */
+export function parseKoreagoldQuote(html) {
+  const $ = load(html);
+  const box = $('.mkprice').first();
+  if (!box.length) throw new Error('시세 영역을 찾지 못했습니다');
+  const prices = {};
+  METAL_KEYS.forEach((key, i) => {
+    const cells = box.find(`.mkprice_contentscol_${i + 1}`).first().children().toArray();
+    const read = (el) => (el ? firstPrice($(el).clone().children('p').remove().end().text()) : null);
+    prices[key] = { buy: read(cells[1]), sell: read(cells[2]) };
+  });
+  const vat = vatFlag(box.text().replace(/\s+/g, ''));
+  return { prices, buyVatIncluded: vat ?? true, vatStated: vat !== null, date: null };
+}
+
+/** 삼성금거래소 시세 위젯: 열이 금속(순금·18K·14K·백금·은), 줄이 "내가 살 때"·"내가 팔 때"인 표 */
+export function parseSamsungQuote(html) {
+  const $ = load(html);
+  const table = $('table.sise-table').first();
+  if (!table.length) throw new Error('시세 표를 찾지 못했습니다');
+  const keys = table
+    .find('thead th')
+    .toArray()
+    .map((th) => rowKey($(th).text()));
+  const row = (cls) =>
+    $(table)
+      .find(`tr.${cls}`)
+      .first()
+      .children('th,td')
+      .toArray();
+  const buyRow = row('row-buy');
+  const sellRow = row('row-sell');
+  if (!buyRow.length || !sellRow.length) throw new Error('살 때·팔 때 줄을 찾지 못했습니다');
+  const prices = {};
+  keys.forEach((key, i) => {
+    if (key && !prices[key]) prices[key] = { buy: firstPrice($(buyRow[i]).text()), sell: firstPrice($(sellRow[i]).text()) };
+  });
+  const vat = vatFlag($(buyRow[0]).text());
+  return { prices, buyVatIncluded: vat ?? true, vatStated: vat !== null, date: parseKoreanDate($('.banner-date').first().text()) };
+}
+
+/** 국제금거래소(부산): 줄마다 [종류, 살 때(VAT별도), 팔 때], 칸 안에 변동폭이 같이 있어 첫 숫자만 씁니다. */
+export function parseKggoldQuote(html) {
+  const $ = load(html);
+  const prices = {};
+  let vatText = '';
+  for (const td of $('td.gold_widgets_title2').toArray()) {
+    const key = rowKey($(td).text());
+    if (!key || prices[key]) continue; // "은수저" 같은 아래 줄이 "은" 값을 덮지 않도록 처음 것만
+    const cells = $(td).closest('tr').children('td').toArray();
+    prices[key] = { buy: firstPrice($(cells[1]).text()), sell: firstPrice($(cells[2]).text()) };
+    vatText ||= $(td).closest('table').text();
+  }
+  if (!prices.gold24k) throw new Error('시세 표를 찾지 못했습니다');
+  const vat = vatFlag(vatText.replace(/\s+/g, ''));
+  return {
+    prices,
+    buyVatIncluded: vat ?? true,
+    vatStated: vat !== null,
+    date: parseKoreanDate($('td.gold_title2').first().text()),
+  };
+}
+
+// ---------- 지점 목록: 사업자별 ----------
+
+const text = ($, el) => $(el).text().replace(/\s+/g, ' ').trim();
+
+/** 한국금시장거래소: dl 하나가 매장 하나 (.mapa1 이름, .mapa2 주소, .mapa3 전화) */
+export function parseKoreagoldBranches(html) {
+  const $ = load(html);
+  return $('#warp_bar2_inner > dl')
+    .toArray()
+    .map((dl) => {
+      const name = text($, $(dl).find('.mapa1').first());
+      const address = text($, $(dl).find('.mapa2').first());
+      const phone = PHONE_RE.exec(text($, $(dl).find('.mapa3').first()))?.[0] ?? null;
+      const notice = text($, $(dl).find('.slide2').first());
+      return { name: cleanName(name), address: address || null, phone, hours: null, opening: isOpening(`${name} ${/오픈\s*예정/.test(notice) ? '오픈 예정' : ''}`), region: toRegion(address, text($, $(dl).find('.barItap_1').first())) };
+    })
+    .filter((b) => b.name);
+}
+
+/** 삼성금거래소 대리점 목록 한 쪽: "46호점 (경기) 삼성금거래소 하남미사점" + 글 번호 */
+export function parseSamsungBranchList(html) {
+  const $ = load(html);
+  return $('td.list-subject a')
+    .toArray()
+    .map((a) => {
+      const title = text($, a);
+      const wrId = Number(/wr_id=(\d+)/.exec($(a).attr('href') ?? '')?.[1]);
+      const m = /\(([^)]+)\)\s*(.+)$/.exec(title);
+      return { wrId, title, area: m?.[1] ?? null, name: (m?.[2] ?? title).replace(/^삼성금거래소\s*/, '').trim() };
+    })
+    .filter((x) => x.wrId);
+}
+
+/** 삼성금거래소 대리점 글: 본문 줄이 [지역, 이름, 주소, 전화, (오시는 길)] */
+export function parseSamsungBranchDetail(html) {
+  const $ = load(html);
+  const body = $('div.view-content').first();
+  if (!body.length) return null;
+  const lines = (body.html() ?? '')
+    .split(/<br\s*\/?>/i)
+    .map((l) => load(l).text().replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+  const address = lines.find((l) => toRegion(l) && /\d/.test(l) && !PHONE_RE.test(l.slice(0, 14))) ?? null;
+  const phone = lines.map((l) => PHONE_RE.exec(l)?.[0]).find(Boolean) ?? null;
+  return { area: lines[0] ?? null, name: lines[1] ?? null, address, phone };
+}
+
+/** 중앙금거래소 지점 표: [지역, 지점명, 주소, 전화번호, 약도] */
+export function parseJungangBranches(html) {
+  const $ = load(html);
+  return $('table.board_list tr')
+    .toArray()
+    .map((tr) => $(tr).children('td').toArray().map((c) => text($, c)))
+    .filter((c) => c.length >= 4 && c[1] && c[2])
+    .map(([area, name, address, phone]) => ({
+      name: cleanName(name),
+      address,
+      phone: PHONE_RE.exec(phone)?.[0] ?? null,
+      hours: null,
+      opening: isOpening(name),
+      region: toRegion(address, area),
+    }));
+}
+
+/** 국제금거래소: 칸 이름(.board_name 등)으로 된 목록, 첫 줄은 머리글 */
+export function parseKggoldBranches(html) {
+  const $ = load(html);
+  const col = (cls) => $(`.board_table_layout .${cls}`).toArray().map((e) => text($, e));
+  const names = col('board_name');
+  const addrs = col('board_addr');
+  const tels = col('board_tel');
+  const out = [];
+  names.forEach((name, i) => {
+    if (i === 0 && /매장명/.test(name)) return;
+    const address = addrs[i] ?? null;
+    if (!name || !address) return;
+    out.push({ name, address, phone: PHONE_RE.exec(tels[i] ?? '')?.[0] ?? null, hours: null, opening: false, region: toRegion(address) });
+  });
+  return out;
+}
+
 // ---------- 사업자 목록과 수집 ----------
 
 const SLOT_SPECS = {
@@ -376,9 +532,12 @@ const SLOT_SPECS = {
 
 /**
  * 사업자 한 곳의 설정.
- *  quote: 'table' | 'goodgold' | 'kgoldsilver' | 'samegold' | 'gbk'
+ *  quote: 'table' | 'goodgold' | 'kgoldsilver' | 'samegold' | 'gbk' | 'jungang' | 'koreagold' | 'samsung' | 'kggold'
+ *  quoteUrl: 시세가 홈페이지(url)가 아닌 다른 주소에 있을 때
  *  bars: 홈페이지의 골드바·실버바 가격도 읽을지
- *  branches: { url, parse(htmlOrTokens, ctx) } 지점 목록
+ *  branches: { url, kind, parse } 지점 목록 ('tokens' = 글자 조각으로, 'html' = HTML로 읽음, 'kaggold'·'samsung' = 여러 쪽)
+ *  stores: 홈페이지 아래쪽에 적힌 매장 주소 (지점 목록이 없거나 본점이 빠진 경우)
+ *  skipBranch: 지점 목록에서 뺄 이름 (다른 출처가 따로 시세를 모으는 매장)
  */
 export const DEALERS = [
   {
@@ -431,6 +590,7 @@ export const DEALERS = [
     region: '서울 종로 · 전국 지점',
     url: 'http://www.goldsilvershop.co.kr/',
     quote: 'jungang',
+    branches: { url: 'http://www.goldsilvershop.co.kr/bbs/board.php?bo_table=jisa&mode=ifr', kind: 'html', parse: parseJungangBranches },
   },
   {
     id: 'kgoldsilver',
@@ -455,6 +615,32 @@ export const DEALERS = [
     url: 'https://gbkmall.com/',
     quote: 'gbk',
   },
+  {
+    id: 'koreagold',
+    name: '한국금시장거래소',
+    region: '서울 목동 본점 · 전국 40여 개 지점',
+    url: 'https://koreagold.kr/',
+    quote: 'koreagold',
+    branches: { url: 'https://koreagold.kr/board/map/list.html?board_no=1002', kind: 'html', parse: parseKoreagoldBranches },
+    skipBranch: /압구정/, // 압구정점은 자체 시세를 따로 모읍니다 (goldmarket)
+  },
+  {
+    id: 'samsunggold',
+    name: '삼성금거래소',
+    region: '전국 40여 개 대리점',
+    url: 'https://samsunggold.co.kr/bbs/board.php?bo_table=branch',
+    quoteUrl: 'https://samsunggold.co.kr/sise_widget2.php',
+    quote: 'samsung',
+    branches: { url: 'https://samsunggold.co.kr/bbs/board.php?bo_table=branch', kind: 'samsung' },
+  },
+  {
+    id: 'kggold',
+    name: '국제금거래소',
+    region: '부산·울산·포항 3개 매장',
+    url: 'https://www.kggold.co.kr/',
+    quote: 'kggold',
+    branches: { url: 'https://www.kggold.co.kr/index.html?m_code=109000000', kind: 'html', parse: parseKggoldBranches },
+  },
 ];
 
 function buildQuote(def, tokens, html) {
@@ -468,6 +654,12 @@ function buildQuote(def, tokens, html) {
       const d = tokens.find((t) => /^\d{4}\.\d{1,2}\.\d{1,2}$/.test(t));
       return { ...q, date: d ? parseKoreanDate(d) : null };
     }
+    case 'koreagold':
+      return parseKoreagoldQuote(html);
+    case 'samsung':
+      return parseSamsungQuote(html);
+    case 'kggold':
+      return parseKggoldQuote(html);
     default:
       return parseSlotQuote(tokens, SLOT_SPECS[def.quote]);
   }
@@ -485,6 +677,8 @@ export function quoteToShop(def, q, tokens) {
   validateQuote(q.prices, { buyOnly: def.quote === 'gbk' });
   const notes = [];
   if (!q.vatStated) notes.push('홈페이지에 부가세 포함 여부가 적혀 있지 않아 포함 가격으로 보고 비교합니다');
+  if (!q.date && def.quote === 'koreagold') notes.push('홈페이지에 시세 날짜가 표시되지 않아 받아 온 시각을 기준으로 봅니다');
+  if (def.quote === 'samsung') notes.push('팔 때는 대리점 매입 시세입니다');
   if (def.quote === 'gbk') notes.push('금고 보관형: 사 두고 보관하다 바로 팔면 부가세·인출수수료가 없고, 실물로 받을 때만 붙습니다 (수수료 금액 미공개)');
   const shop = {
     id: def.id,
@@ -509,20 +703,60 @@ export function quoteToShop(def, q, tokens) {
 /**
  * 지점 목록에 공통 항목을 채웁니다.
  * quoteId: 이 매장에 붙일 가격(매장 시세 id). 지점별 시세를 따로 공개하지 않아 본사 고시가를 씁니다.
+ * 다른 지점과 주소가 같은데 이름이 가리키는 시·도가 주소와 다르면(예: "천안점"인데 경기 평택 주소) 잘못 옮겨 적은 것으로 보고 뺍니다.
  */
-export function finishBranches(def, list) {
+export function finishBranches(def, list, { source = `${def.id}-stores` } = {}) {
   const seen = new Set();
+  const byAddress = new Map(); // 주소 → 그 주소를 쓰는 서로 다른 지점 이름들
+  for (const b of list) if (b.address) byAddress.set(b.address, new Set([...(byAddress.get(b.address) ?? []), b.name]));
   const out = [];
   for (const b of list) {
     const key = `${b.name}|${b.address ?? ''}`;
     if (!b.name || seen.has(key)) continue;
+    if (def.skipBranch?.test(b.name)) continue;
+    if (b.address && byAddress.get(b.address).size > 1 && nameConflictsWithAddress(b)) continue;
     seen.add(key);
-    out.push({ id: `${def.id}-${out.length + 1}`, chain: def.id, chainName: def.name, url: def.url, source: def.id, quoteId: def.id, ...b });
+    out.push({ id: `${def.id}-${out.length + 1}`, chain: def.id, chainName: def.name, url: def.url, source, quoteId: def.id, ...b });
   }
   return out;
 }
 
-async function fetchBranches(def) {
+/** 이름이 가리키는 시·도와 주소의 시·도가 다른지 ("천안점"인데 경기 평택 주소) */
+function nameConflictsWithAddress(b) {
+  const named = guessRegion(b.name);
+  const { region } = parseAddress(b.address);
+  return Boolean(named && region && named !== region);
+}
+
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** 삼성금거래소: 목록 몇 쪽 + 대리점마다 글 하나 (주소는 글 안에만 있음). 사이트에 부담이 가지 않게 천천히 받습니다. */
+async function fetchSamsungBranches(spec) {
+  const list = [];
+  for (let p = 1; p <= 6; p++) {
+    const page = parseSamsungBranchList(await fetchText(`${spec.url}&page=${p}`));
+    const fresh = page.filter((x) => !list.some((y) => y.wrId === x.wrId));
+    if (!fresh.length) break;
+    list.push(...fresh);
+    await pause(300);
+  }
+  const out = [];
+  let failed = 0;
+  for (const item of list) {
+    try {
+      const d = parseSamsungBranchDetail(await fetchText(`${spec.url}&wr_id=${item.wrId}`));
+      const name = d?.name || item.name;
+      out.push({ name, address: d?.address ?? null, area: d?.address ? null : item.area, phone: d?.phone ?? null, hours: null, opening: isOpening(item.title), region: toRegion(d?.address ?? '', item.area) });
+    } catch {
+      failed++;
+      out.push({ name: item.name, address: null, area: item.area, phone: null, hours: null, opening: isOpening(item.title), region: toRegion(item.area ?? '') });
+    }
+    await pause(250);
+  }
+  return { list: out, warnings: failed ? [`대리점 ${failed}곳은 상세 주소를 받지 못해 지역만 표시합니다`] : [] };
+}
+
+async function fetchBranchList(def) {
   const spec = def.branches;
   if (spec.kind === 'kaggold') {
     const first = parseKaggoldBranches(await fetchText(spec.url));
@@ -531,59 +765,70 @@ async function fetchBranches(def) {
     for (let p = 2; p <= pages; p++) {
       all = all.concat(parseKaggoldBranches(await fetchText(`${spec.url}&page=${p}`)).branches);
     }
-    return finishBranches(def, all);
+    return { list: all, warnings: [] };
   }
-  return finishBranches(def, spec.parse(flatTokens(await fetchText(spec.url))));
+  if (spec.kind === 'samsung') return fetchSamsungBranches(spec);
+  const html = await fetchText(spec.url);
+  return { list: spec.parse(spec.kind === 'html' ? html : flatTokens(html)), warnings: [] };
 }
 
-/** 사업자 한 곳을 수집합니다. 시세·상품·지점 중 일부만 실패해도 나머지는 살립니다. */
+/**
+ * 사업자 한 곳의 오늘 시세와 홈페이지 판매가를 받습니다 (자주 갱신).
+ * 지점 목록은 잘 바뀌지 않아 fetchDealerStores로 따로, 드물게 받습니다.
+ */
 export async function fetchDealer(def) {
   const warnings = [];
   const shops = [];
   const offers = [];
-  let branches = [];
-
-  const [homeRes, branchRes] = await Promise.allSettled([fetchText(def.url), def.branches ? fetchBranches(def) : Promise.resolve([])]);
-
-  if (homeRes.status === 'fulfilled') {
-    const html = homeRes.value;
-    const tokens = flatTokens(html);
-    try {
-      const shop = quoteToShop(def, withDate(buildQuote(def, tokens, html), tokens), tokens);
-      shops.push(shop);
-      const offer = shopQuoteOffer(shop);
-      if (offer) offers.push(offer);
-    } catch (err) {
-      warnings.push(`시세: ${err.message}`);
-    }
-    if (def.bars) {
-      try {
-        const bars = cheapestBySize(parseBarsFromTokens(tokens));
-        offers.push(
-          ...productOffers(bars, {
-            id: `${def.id}-shop`,
-            channelName: `${def.name} · 홈페이지 판매가`,
-            vendor: def.name,
-            summary: '홈페이지 판매가',
-            url: def.url,
-            source: def.id,
-            quotedDate: shops[0]?.date ?? null,
-            notes: ['홈페이지에 나온 판매가입니다. 재고와 배송·방문 수령 방법은 매장에 확인하세요'],
-          }),
-        );
-      } catch (err) {
-        warnings.push(`상품: ${err.message}`);
-      }
-    }
-  } else {
-    warnings.push(`홈페이지: ${homeRes.reason?.message ?? homeRes.reason}`);
+  const html = await fetchText(def.quoteUrl ?? def.url);
+  const tokens = flatTokens(html);
+  try {
+    const shop = quoteToShop(def, withDate(buildQuote(def, tokens, html), tokens), tokens);
+    shops.push(shop);
+    const offer = shopQuoteOffer(shop);
+    if (offer) offers.push(offer);
+  } catch (err) {
+    warnings.push(`시세: ${err.message}`);
   }
+  if (def.bars) {
+    try {
+      const bars = cheapestBySize(parseBarsFromTokens(tokens));
+      offers.push(
+        ...productOffers(bars, {
+          id: `${def.id}-shop`,
+          channelName: `${def.name} · 홈페이지 판매가`,
+          vendor: def.name,
+          summary: '홈페이지 판매가',
+          url: def.url,
+          source: def.id,
+          quotedDate: shops[0]?.date ?? null,
+          notes: ['홈페이지에 나온 판매가입니다. 재고와 배송·방문 수령 방법은 매장에 확인하세요'],
+        }),
+      );
+    } catch (err) {
+      warnings.push(`상품: ${err.message}`);
+    }
+  }
+  if (!shops.length && !offers.length) throw new Error(warnings.join(' · ') || `${def.name} 시세를 읽지 못했습니다`);
+  return { market: {}, shops, offers, branches: [], warnings };
+}
 
-  if (branchRes.status === 'fulfilled') branches = branchRes.value;
-  else warnings.push(`지점: ${branchRes.reason?.message ?? branchRes.reason}`);
-
-  if (!shops.length && !offers.length && !branches.length) throw new Error(warnings.join(' · ') || `${def.name} 데이터를 받지 못했습니다`);
-  // 홈페이지 아래쪽에 적힌 매장(본점) 주소. 지점 목록에 없을 때만 더합니다.
-  if (def.stores?.length) branches = finishBranches(def, [...branches, ...def.stores.map((s) => ({ hours: null, opening: false, region: null, ...s }))]);
-  return { market: {}, shops, offers, branches, warnings };
+/** 사업자 한 곳의 매장 목록 (지점 목록 페이지 + 홈페이지에 적힌 본점 주소) */
+export async function fetchDealerStores(def) {
+  const warnings = [];
+  let list = [];
+  if (def.branches) {
+    try {
+      const res = await fetchBranchList(def);
+      list = res.list;
+      warnings.push(...res.warnings);
+    } catch (err) {
+      if (!def.stores?.length) throw err;
+      warnings.push(`지점 목록: ${err.message}`);
+    }
+  }
+  const stores = (def.stores ?? []).map((s) => ({ hours: null, opening: false, region: null, ...s }));
+  const branches = finishBranches(def, [...list, ...stores]);
+  if (!branches.length) throw new Error(warnings.join(' · ') || '지점 목록이 비어 있습니다');
+  return { market: {}, shops: [], offers: [], branches, warnings };
 }

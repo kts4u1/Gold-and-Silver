@@ -7,6 +7,7 @@ import { dropImplausible } from '../src/collect.js';
 import {
   DEALERS,
   fetchDealer,
+  fetchDealerStores,
   parsePairQuote,
   parseBarsFromTokens,
   parseGbk,
@@ -240,29 +241,33 @@ describe('사업자 수집 (네트워크 없이)', () => {
     }
   };
 
-  it('시세·홈페이지 판매가·지점을 한 번에 모읍니다', async () => {
-    const d = def('goodgold');
-    const result = await withFetch(
-      { 'https://www.goodgold.co.kr/81': html('goodgold-branches.html'), 'https://www.goodgold.co.kr/': html('goodgold-home.html') },
-      () => fetchDealer(d),
-    );
+  it('시세와 홈페이지 판매가를 모읍니다 (지점 목록은 따로)', async () => {
+    const result = await withFetch({ 'https://www.goodgold.co.kr/': html('goodgold-home.html') }, () => fetchDealer(def('goodgold')));
     assert.equal(result.shops[0].prices.gold24k.buy, 773000);
-    assert.equal(result.branches.length, 56);
-    assert.equal(result.branches[0].chain, 'goodgold');
-    assert.match(result.branches[0].id, /^goodgold-\d+$/);
+    assert.deepEqual(result.branches, []);
     assert.ok(result.offers.some((o) => o.channelName === '국제표준금거래소 · 홈페이지 판매가' && o.sizeG === 3.75));
     assert.ok(result.offers.some((o) => o.channelName === '국제표준금거래소' && o.sizeG === 3.75)); // 고시가
   });
 
-  it('지점 페이지가 실패해도 시세는 살리고 경고만 남깁니다', async () => {
-    const result = await withFetch({ 'https://www.goodgold.co.kr/': html('goodgold-home.html') }, () => fetchDealer(def('goodgold')));
-    assert.equal(result.shops.length, 1);
-    assert.equal(result.branches.length, 0);
-    assert.match(result.warnings.join(' '), /지점/);
+  it('지점 목록: 업체·출처·가격 연결 정보를 채웁니다', async () => {
+    const result = await withFetch({ 'https://www.goodgold.co.kr/81': html('goodgold-branches.html') }, () => fetchDealerStores(def('goodgold')));
+    assert.equal(result.branches.length, 56);
+    const b = result.branches[0];
+    assert.equal(b.chain, 'goodgold');
+    assert.equal(b.source, 'goodgold-stores');
+    assert.equal(b.quoteId, 'goodgold'); // 본사 고시가를 붙임
+    assert.match(b.id, /^goodgold-\d+$/);
+  });
+
+  it('지점 목록 페이지가 실패해도 홈페이지에 적힌 본점은 남깁니다', async () => {
+    const result = await withFetch({}, () => fetchDealerStores(def('jongrogx')));
+    assert.deepEqual(result.branches.map((b) => b.name), ['종로 본점']);
+    assert.match(result.warnings.join(' '), /지점 목록/);
   });
 
   it('아무것도 못 읽으면 예외를 던집니다', async () => {
     await assert.rejects(withFetch({}, () => fetchDealer(def('kaggold'))), /HTTP 404/);
+    await assert.rejects(withFetch({}, () => fetchDealerStores(def('kaggold'))), /HTTP 404/);
   });
 
   it('한국공인금거래소 지점은 여러 페이지를 이어서 읽습니다', async () => {
@@ -272,12 +277,10 @@ describe('사업자 수집 (네트워크 없이)', () => {
       return new Response(html('kaggold-branches-p1.html'));
     };
     try {
-      const result = await fetchDealer({ ...def('kaggold'), quote: 'none', bars: false, url: 'http://www.kaggold.com/' });
+      const result = await fetchDealerStores(def('kaggold'));
       assert.ok(calls.some((u) => u.endsWith('&page=5')));
       assert.ok(!calls.some((u) => u.endsWith('&page=6')));
       assert.equal(result.branches.length, 15); // 같은 샘플을 5번 읽어도 중복은 합쳐짐
-    } catch (err) {
-      assert.fail(err);
     } finally {
       globalThis.fetch = realFetch;
     }

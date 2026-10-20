@@ -713,7 +713,8 @@ function reachInfo(o) {
   if (o.source === 'manual') return { label: '직접 입력', nearby: true };
   if (o.reach === 'online') return { label: '택배 배송', nearby: true };
   if (o.reach === 'nationwide') return { label: o.kind === 'krx' ? '증권사 계좌 · 전국' : '은행 영업점 · 전국', nearby: true };
-  const branches = (state.data?.branches ?? []).filter((b) => b.source === o.source);
+  // 이 구매처 가격을 쓰는 매장: 같은 업체(chain)이거나 같은 시세(quoteId)를 붙인 매장
+  const branches = (state.data?.branches ?? []).filter((b) => b.chain === o.source || b.quoteId === o.channelId);
   if (!branches.length) return { label: '매장 방문', nearby: !state.location.region };
   if (!state.location.region) return { label: `매장 ${branches.length}곳`, nearby: true };
   const inArea = rankNearby({ branches, shops: [], user: state.location, ...areaQuery() });

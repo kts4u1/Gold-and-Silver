@@ -144,11 +144,13 @@ export function guessDistrict(name, region = null) {
 /** 주소가 없는 지점의 시·도도 이름으로 짐작합니다 ("부평" → 인천). 하나로 정해질 때만. */
 export function guessRegion(name) {
   const text = String(name ?? '');
+  // "부산본점", "광주 수완점"처럼 광역시 이름이 들어 있으면 그것이 가장 확실합니다 ("부산본점" 속 "산본"에 속지 않도록 먼저 봄)
+  const metro = ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '제주'].find((r) => text.includes(r));
+  if (metro) return metro;
   for (const [alias, [r]] of Object.entries(AREA_ALIASES)) if (text.includes(alias)) return r;
   const hits = DISTRICTS.filter(([, d]) => stem(d).length >= 2 && text.includes(stem(d)));
   const regions = [...new Set(hits.map((h) => h[0]))];
   if (regions.length === 1) return regions[0];
-  // "울산지사", "대전점"처럼 광역시 이름이 들어 있는 경우
   return REGIONS.find((r) => text.includes(r)) ?? null;
 }
 
@@ -222,7 +224,8 @@ export function rankNearby({ branches = [], shops = [], user = {}, area = 'regio
 
   const rows = [];
   for (const b of branches) {
-    const center = centerOf(b.region, b.district);
+    // 매장 좌표를 공개한 곳은 그 좌표를, 아니면 시·군·구 중심을 씁니다
+    const center = Number.isFinite(b.lat) && Number.isFinite(b.lng) ? { lat: b.lat, lng: b.lng, precise: true } : centerOf(b.region, b.district);
     const same = isSame(b);
     // 거리는 내 시·군·구와 매장 시·군·구를 둘 다 알 때만 (시·도만 알면 너무 부정확)
     const km = same ? 0 : precise && center?.precise ? distanceKm(home, center) : null;

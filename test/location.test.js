@@ -73,6 +73,9 @@ describe('주소 → 시·도, 시·군·구', () => {
   it('주소가 없는 지점은 이름으로 짐작합니다', () => {
     assert.equal(guessRegion('부평지사'), '인천');
     assert.equal(guessRegion('울산지사'), '울산');
+    assert.equal(guessRegion('부산본점'), '부산'); // "산본"(군포)으로 오인하지 않음
+    assert.equal(guessRegion('광주 수완점'), '광주');
+    assert.equal(guessRegion('천안점'), '충남');
     assert.equal(guessDistrict('분당점'), '성남시');
     assert.equal(guessDistrict('동대구지사', '대구'), '동구');
     assert.equal(guessDistrict('고성점'), null); // 강원·경남에 모두 있어 정할 수 없음

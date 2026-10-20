@@ -2,7 +2,7 @@
 import { load } from 'cheerio';
 import { fetchJson, fetchText, toNumber } from '../http.js';
 import { productOffers, shopQuoteOffer } from './shops.js';
-import { cheapestBySize, parseCafe24List, parseKoreanDate } from './util.js';
+import { cheapestBySize, parseCafe24List, parseKoreanDate, PHONE_RE, toRegion } from './util.js';
 
 const CHART_API = 'https://irena111.cafe24.com/api/custom/kgs_chart.php';
 const CHART_PAGE = 'https://goldgold.co.kr/custom/html/kgs_chart_gold.html';
@@ -138,7 +138,37 @@ export async function fetchKgs() {
   return { market: {}, shops, offers, warnings };
 }
 
-// 부산 지점 홈페이지가 안내하는 매장 (상세 주소는 홈페이지에 없어 구 단위로만 위치를 잡습니다)
+// ---------- 부산 지점 매장 목록 ----------
+
+export const BUSAN_STORES_URL = `${BUSAN_URL}bbs/board.php?bo_table=sub0501`;
+
+/** 한국표준금거래소 부산 "매장안내": 매장마다 이름과 [전화·주소·영업시간] 표 */
+export function parseKgsBusanBranches(html) {
+  const $ = load(html);
+  const text = (el) => $(el).text().replace(/\s+/g, ' ').trim();
+  return $('.gall_text_href')
+    .toArray()
+    .map((el) => {
+      const kv = {};
+      $(el)
+        .find('table.tb1 tr')
+        .each((_, tr) => {
+          kv[text($(tr).find('th'))] = text($(tr).find('td'));
+        });
+      const address = kv['주소'] || null;
+      return {
+        name: text($(el).find('a.bo_tit').first()).replace(/^한국표준금거래소\s*/, ''),
+        address,
+        phone: PHONE_RE.exec(kv['전화'] ?? '')?.[0] ?? null,
+        hours: kv['영업시간'] || null,
+        opening: false,
+        region: toRegion(address, '부산'),
+      };
+    })
+    .filter((b) => b.name);
+}
+
+// 매장 안내 페이지를 못 읽을 때 쓰는 기본 목록 (구 단위 위치만)
 const BUSAN_STORES = [
   ['동래점', '부산 동래구'],
   ['남포점', '부산 중구 남포동'],
@@ -147,32 +177,29 @@ const BUSAN_STORES = [
   ['수영점', '부산 수영구'],
 ];
 
-export function kgsBusanBranches() {
-  return BUSAN_STORES.map(([name, area], i) => ({
+export function kgsBusanBranches(list = BUSAN_STORES.map(([name, area]) => ({ name, area, address: null, phone: null, hours: null, opening: false, region: '부산' }))) {
+  return list.map((b, i) => ({
     id: `kgs-busan-${i + 1}`,
     chain: 'kgs-busan',
     chainName: '한국표준금거래소 부산',
-    source: 'kgs-busan',
+    source: 'kgs-busan-stores',
     quoteId: 'kgs-busan',
     url: BUSAN_URL,
-    name,
-    address: null,
-    area,
-    phone: null,
-    hours: null,
-    opening: false,
-    region: '부산',
+    ...b,
   }));
 }
 
-export async function fetchKgsBusan() {
-  const html = await fetchText(BUSAN_URL);
-  const branches = kgsBusanBranches();
+export async function fetchKgsBusanStores() {
   try {
-    const shop = parseKgsBusan(html);
-    return { market: {}, shops: [shop], offers: [shopQuoteOffer(shop)].filter(Boolean), branches };
+    const list = parseKgsBusanBranches(await fetchText(BUSAN_STORES_URL));
+    if (!list.length) throw new Error('매장 안내에서 매장을 찾지 못했습니다');
+    return { market: {}, shops: [], offers: [], branches: kgsBusanBranches(list) };
   } catch (err) {
-    // 오늘 시세가 아직 안 올라온 날에도 매장 위치는 보여 줍니다
-    return { market: {}, shops: [], offers: [], branches, warnings: [err.message] };
+    return { market: {}, shops: [], offers: [], branches: kgsBusanBranches(), warnings: [`매장 안내: ${err.message} (구 단위 위치만 표시)`] };
   }
+}
+
+export async function fetchKgsBusan() {
+  const shop = parseKgsBusan(await fetchText(BUSAN_URL));
+  return { market: {}, shops: [shop], offers: [shopQuoteOffer(shop)].filter(Boolean) };
 }
