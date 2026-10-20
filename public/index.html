@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>금·은 실물 최저가</title>
+    <meta name="description" content="골드바·실버바를 어디서 사야 가장 싼지 실시간 시세로 비교합니다. KRX 금시장, 은행, 조폐공사 가격을 한눈에." />
+    <meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/style.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap top-inner">
+        <div>
+          <h1>금·은 실물 최저가<span class="dot">.</span></h1>
+          <p class="sub">골드바·실버바, 어디서 사야 가장 쌀까?</p>
+        </div>
+        <button id="refresh" class="btn" type="button">새로고침</button>
+      </div>
+      <div class="wrap top-row">
+        <div class="metal-switch" role="radiogroup" aria-label="금속 선택">
+          <button type="button" role="radio" aria-checked="true" data-metal="gold">금</button>
+          <button type="button" role="radio" aria-checked="false" data-metal="silver">은</button>
+        </div>
+        <span id="updated" class="muted" aria-live="polite">불러오는 중…</span>
+      </div>
+    </header>
+
+    <main id="main" class="wrap">
+      <section aria-labelledby="market-title">
+        <h2 id="market-title">오늘의 시세</h2>
+        <div id="tiles" class="tiles"></div>
+        <p id="market-notice" class="notice" hidden></p>
+        <div class="card chart-card">
+          <h3 id="chart-title">시세 추이</h3>
+          <div id="chart-sub" class="muted small"></div>
+          <div id="chart" class="chart"></div>
+        </div>
+        <div id="sell-ref" class="card table-wrap mini-table"></div>
+      </section>
+
+      <section aria-labelledby="finder-title">
+        <h2 id="finder-title">최저가 찾기</h2>
+        <div class="card controls">
+          <fieldset>
+            <legend>상품 중량</legend>
+            <div id="sizes" class="chips"></div>
+          </fieldset>
+          <div>
+            <div class="field-label" id="qty-label">수량</div>
+            <div class="qty" role="group" aria-labelledby="qty-label">
+              <button class="btn" type="button" data-step="-1" aria-label="수량 줄이기">−</button>
+              <input id="qty" type="number" min="1" max="99" value="1" inputmode="numeric" aria-labelledby="qty-label" />
+              <button class="btn" type="button" data-step="1" aria-label="수량 늘리기">+</button>
+            </div>
+          </div>
+        </div>
+        <p id="explain" class="explain" aria-live="polite"></p>
+        <ol id="ranking" class="ranking"></ol>
+      </section>
+
+      <section aria-labelledby="pergram-title">
+        <h2 id="pergram-title">g당 실질 가격 한눈에 보기</h2>
+        <p class="muted small">상품 1개를 살 때 부가세·수수료까지 모두 더한 1g당 가격입니다. 보통 무거운 상품일수록 g당 가격이 쌉니다.</p>
+        <div class="card table-wrap">
+          <table id="pergram-table">
+            <thead>
+              <tr>
+                <th>구매처</th>
+                <th>상품</th>
+                <th class="num">1개 총액</th>
+                <th class="num">g당 가격</th>
+                <th class="num">국제가 대비</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <button id="pergram-more" class="btn more" type="button" hidden></button>
+      </section>
+
+      <section aria-labelledby="manual-title">
+        <h2 id="manual-title">내가 받은 견적 비교하기</h2>
+        <p class="muted small">동네 금은방이나 온라인몰에서 받은 가격을 넣으면 위 순위에 함께 비교됩니다. 이 기기에만 저장돼요.</p>
+        <form id="manual-form" class="card">
+          <div class="form-grid">
+            <label>판매처 이름
+              <input name="name" required maxlength="40" placeholder="예: 종로 OO금은방" />
+            </label>
+            <label>금속
+              <select name="metal">
+                <option value="gold">금</option>
+                <option value="silver">은</option>
+              </select>
+            </label>
+            <label>상품 중량 (g)
+              <input name="sizeG" type="number" required min="0.1" step="0.01" inputmode="decimal" placeholder="예: 3.75" />
+            </label>
+            <label>1개 가격 (원)
+              <input name="unitPrice" type="number" required min="1" step="1" inputmode="numeric" placeholder="예: 780000" />
+            </label>
+            <label class="check"><input name="vatIncluded" type="checkbox" checked /> 부가세 포함 가격</label>
+            <button class="btn btn-primary" type="submit">견적 추가</button>
+          </div>
+          <ul id="manual-list" class="manual-list"></ul>
+        </form>
+      </section>
+
+      <section aria-labelledby="settings-title">
+        <h2 id="settings-title">수수료 설정</h2>
+        <details class="card settings">
+          <summary>KRX 금시장(증권사) 수수료 바꾸기</summary>
+          <form id="settings-form" class="form-grid">
+            <label>매매수수료율 (%)
+              <input name="krxTradeFeeRate" type="number" min="0" max="5" step="0.001" inputmode="decimal" />
+            </label>
+            <label>증권사 인출수수료 (원/건)
+              <input name="krxBrokerWithdrawFee" type="number" min="0" step="100" inputmode="numeric" />
+            </label>
+            <label>예탁결제원 인출수수료 (원/개)
+              <input name="krxKsdWithdrawFeePerBar" type="number" min="0" step="100" inputmode="numeric" />
+            </label>
+            <button class="btn" type="button" id="settings-reset">기본값으로</button>
+          </form>
+          <p class="muted small">기본값: 매매수수료 0.3%(온라인 기준 증권사별 약 0.165~0.33%), 증권사 인출 11,000원/건, 예탁결제원 인출 22,000원/개 (부가세 포함, 한화투자증권 안내 기준). 거래하는 증권사의 수수료로 바꾸면 더 정확해요.</p>
+        </details>
+      </section>
+
+      <section aria-labelledby="sources-title">
+        <h2 id="sources-title">데이터 출처</h2>
+        <div class="card">
+          <ul id="sources" class="sources"></ul>
+          <p class="muted small" id="not-covered"></p>
+        </div>
+      </section>
+
+      <footer>
+        <p>가격은 각 출처가 공개한 값을 자동으로 모아 계산한 참고용 정보입니다. 실제 구매 전에 판매처에서 최종 가격·재고·수수료를 꼭 확인하세요.</p>
+        <p>투자 권유가 아니며, 이 정보로 인한 손익에 책임지지 않습니다.</p>
+      </footer>
+    </main>
+  </body>
+</html>

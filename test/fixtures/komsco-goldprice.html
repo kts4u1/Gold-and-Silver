@@ -1,0 +1,80 @@
+<!doctype html><html><body>
+<div class="current-time">
+				금매매가격 기준: 2026년 10월 20일 10시 59분 기준
+			</div>
+			<!-- 현재 금시세 정보 -->
+			<form name="Frm" method="post" action="gold_price_info.do">
+				<div class="ui-table basic gold-price-table">
+					<table>
+						<caption>현재 금시세 정보: 국제금시세, 매매기준환율, 판매가 등의 항목으로 구성된 표</caption>
+						<tbody>
+							<tr>
+								<th scope="row">국제금시세($/T.oz)</th>
+								<td>4,132.62</td>
+								<th scope="row">매매기준환율(￦/＄)</th>
+								<td>1,331.07</td>
+							</tr>
+							<tr>
+								<th scope="row">판매가(100g 미만) ￦/g</th>
+								<td>206,192.35(부가세포함)</td>
+								<th scope="row">판매가(100g 이상) ￦/g</th>
+								<td>204,247.14(부가세포함)</td>
+							</tr>
+							<tr>
+								<th scope="row">단위</th>
+								<td colspan="3">
+									<div class="form-group">
+										<input type="radio" id="paraType1" name="paraType" value="one" class="ui-form" checked="">
+										<label for="paraType1">￦/g</label>
+										<input type="radio" id="paraType2" name="paraType" value="don" class="ui-form">
+										<label for="paraType2">￦/3.75</label>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">기간</th>
+								<td colspan="3">
+									<!-- 기간선택 -->
+									<div class="filter-box">
+										<div class="form-row group">
+											<label class="ui-radio-button">
+												<input type="radio" onclick="inperiod.input('sdate', 'edate', 't')" name="term" value="1" checked="">
+												<span class="label">오늘</span>
+											</label>
+											<label class="ui-radio-button">
+												<input type="radio" onclick="inperiod.input('sdate', 'edate', 'd', -7)" name="term" value="2">
+												<span class="label">7일</span>
+											</label>
+											<label class="ui-radio-button">
+												<input type="radio" onclick="inperiod.input('sdate', 'edate', 'd', -30)" name="term" value="3">
+												<span class="label">30일</span>
+											</label>
+											<label class="ui-radio-button">
+												<input type="radio" onclick="inperiod.input('sdate', 'edate', 'd', -90)" name="term" value="4">
+												<span class="label">90일</span>
+											</label>
+											<label class="ui-radio-button">
+												<input type="radio" onclick="inperiod.input('sdate', 'edate', 'd', -180)" name="term" value="5">
+												<span class="label">180일</span>
+											</label>
+											<label class="ui-radio-button">
+												<input type="radio" onclick="inperiod.input('sdate', 'edate', 'd', -365)" name="term" value="6">
+												<span class="label">1년</span>
+											</label>
+										</div>
+										<div class="form-row calendar">
+											<div class="ui-input calendar">
+												<input type="text" id="sdate" name="sdate" value="" maxlength="10" class="text_input" onclick="calendar.open(event, 'sdate', 'YYYY-MM-DD')" style="width:90px;" readonly="">
+											</div>
+											<span>-</span>
+											<div class="ui-input calendar">
+												<input type="text" id="edate" name="edate" value="" maxlength="10" class="text_input" onclick="calendar.open(event, 'edate', 'YYYY-MM-DD')" style="width:90px;" readonly="">
+											</div>
+											<button type="button" class="ui-btn filled" id="search_gold_price_info">조회</button>
+										</div>
+									</div><!-- //기간선택 -->
+								</td>
+							</tr>
+						</tbody>
+					</table>
+</body></html>

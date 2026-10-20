@@ -1,0 +1,115 @@
+{
+ "categoryType": "metals",
+ "reutersCode": "M04020000",
+ "symbolCode": "M04020000",
+ "name": "국내 금",
+ "fullName": "국내 금",
+ "nameEng": null,
+ "itemLogoUrl": "https://ssl.pstatic.net/imgstock/fn/real/logo/index/MarketIndexMetals.svg",
+ "itemLogoPngUrl": "https://ssl.pstatic.net/imgstock/fn/real/logo/png/index/MarketIndexMetals.png",
+ "delayTime": 0,
+ "delayTimeName": "실시간",
+ "description": "",
+ "localTradedAt": "2026-10-20T10:57:54+09:00",
+ "closePrice": "176,330",
+ "fluctuations": "-2,630",
+ "fluctuationsRatio": "-1.47",
+ "fluctuationsType": {
+  "code": "5",
+  "text": "하락",
+  "name": "FALLING"
+ },
+ "marketStatus": "OPEN",
+ "priceDataType": "REALTIME",
+ "endUrl": "https://m.stock.naver.com/marketindex/metals/M04020000",
+ "chartIqEndUrl": "https://m.stock.naver.com/fchart/marketindex/metals/M04020000",
+ "unit": "원/g",
+ "degreeCount": null,
+ "imageChartUrlInfo": {
+  "line": {
+   "day": "https://financial-vn.pstatic.net/chart/mobile/marketindex/day/M04020000_end.png",
+   "month": "https://financial-vn.pstatic.net/chart/mobile/marketindex/month/M04020000_end.png",
+   "month3": "https://financial-vn.pstatic.net/chart/mobile/marketindex/month3/M04020000_end.png",
+   "year": "https://financial-vn.pstatic.net/chart/mobile/marketindex/year/M04020000_end.png",
+   "year3": "https://financial-vn.pstatic.net/chart/mobile/marketindex/year3/M04020000_end.png",
+   "year10": "https://financial-vn.pstatic.net/chart/mobile/marketindex/year10/M04020000_end.png"
+  }
+ },
+ "scriptChartTypes": [
+  "day",
+  "areaMonth",
+  "areaMonthThree",
+  "areaYear",
+  "areaYearThree",
+  "areaYearFive",
+  "areaYearTen"
+ ],
+ "marketIndexTotalInfos": [
+  {
+   "code": "lastClosePrice",
+   "key": "전일",
+   "value": "178,960"
+  },
+  {
+   "code": "openPrice",
+   "key": "시가",
+   "value": "178,240",
+   "compareToPreviousPrice": {
+    "code": "5",
+    "text": "하락",
+    "name": "FALLING"
+   }
+  },
+  {
+   "code": "highPrice",
+   "key": "고가",
+   "value": "178,240",
+   "compareToPreviousPrice": {
+    "code": "5",
+    "text": "하락",
+    "name": "FALLING"
+   }
+  },
+  {
+   "code": "lowPrice",
+   "key": "저가",
+   "value": "175,830",
+   "compareToPreviousPrice": {
+    "code": "5",
+    "text": "하락",
+    "name": "FALLING"
+   }
+  },
+  {
+   "code": "highPriceOf52weeks",
+   "key": "52주 최고",
+   "value": "269,810"
+  },
+  {
+   "code": "lowPriceOf52weeks",
+   "key": "52주 최저",
+   "value": "175,830"
+  },
+  {
+   "code": "accumulatedTradingVolume",
+   "key": "거래량",
+   "value": "82,557"
+  },
+  {
+   "code": "accumulatedTradingValue",
+   "key": "거래대금",
+   "value": "14,564백만"
+  }
+ ],
+ "statementSource": null,
+ "nationType": "KOR",
+ "nationName": "대한민국",
+ "nextReleaseKoreaDate": null,
+ "calendars": null,
+ "openPrice": null,
+ "highPrice": null,
+ "lowPrice": null,
+ "month": "",
+ "newPcUrl": "https://stock.naver.com/marketindex/metals/M04020000",
+ "highPriceOf52Weeks": "269,810"
+}

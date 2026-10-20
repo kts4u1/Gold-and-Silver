@@ -1,0 +1,20 @@
+{
+  "name": "gold-and-silver",
+  "version": "1.0.0",
+  "description": "국내 금·은 실물(골드바·실버바) 구매처별 실시간 가격 비교 및 최저가 추천",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "express": "^4.22.3"
+  }
+}

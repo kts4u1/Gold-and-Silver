@@ -1,0 +1,13 @@
+{
+  "name": "금·은 실물 최저가",
+  "short_name": "금은 최저가",
+  "description": "골드바·실버바를 어디서 사야 가장 싼지 실시간으로 비교합니다.",
+  "lang": "ko",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9f9f7",
+  "theme_color": "#8a5a00",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

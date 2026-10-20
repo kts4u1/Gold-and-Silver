@@ -1,0 +1,110 @@
+{
+ "categoryType": "metals",
+ "reutersCode": "SIcv1",
+ "symbolCode": "SI",
+ "name": "은",
+ "fullName": "은",
+ "nameEng": "COMEX 5000ox Silver cv1",
+ "itemLogoUrl": "https://ssl.pstatic.net/imgstock/fn/real/logo/index/MarketIndexMetals.svg",
+ "itemLogoPngUrl": "https://ssl.pstatic.net/imgstock/fn/real/logo/png/index/MarketIndexMetals.png",
+ "delayTime": 10,
+ "delayTimeName": "10분 지연",
+ "description": "뉴욕상품거래소(COMEX)에서 거래되는 은 선물의 최근월물 가격으로, 순도 99.99% 이상으로 정제된 바 형태의 실물 인수도가 가능한 상품 (계약단위: 5,000 트로이온스)",
+ "localTradedAt": "2026-10-19T20:48:39-05:00",
+ "closePrice": "56.91",
+ "fluctuations": "-0.36",
+ "fluctuationsRatio": "-0.63",
+ "fluctuationsType": {
+  "code": "5",
+  "text": "하락",
+  "name": "FALLING"
+ },
+ "marketStatus": "OPEN",
+ "priceDataType": "DELAYED_PRICE",
+ "endUrl": "https://m.stock.naver.com/marketindex/metals/SIcv1",
+ "chartIqEndUrl": "https://m.stock.naver.com/fchart/marketindex/metals/SIcv1",
+ "unit": "USD/OZS",
+ "degreeCount": null,
+ "imageChartUrlInfo": {
+  "line": {
+   "day": "https://financial-vn.pstatic.net/chart/mobile/world/day/SIcv1_end.png",
+   "month": "https://financial-vn.pstatic.net/chart/mobile/world/area/month/SIcv1_end.png",
+   "month3": "https://financial-vn.pstatic.net/chart/mobile/world/area/month3/SIcv1_end.png",
+   "year": "https://financial-vn.pstatic.net/chart/mobile/world/area/year/SIcv1_end.png",
+   "year3": "https://financial-vn.pstatic.net/chart/mobile/world/area/year3/SIcv1_end.png",
+   "year10": "https://financial-vn.pstatic.net/chart/mobile/world/area/year10/SIcv1_end.png"
+  },
+  "mini": {
+   "transparent": "https://financial-vn.pstatic.net/chart/mobile/world/day/SIcv1_transparent.png",
+   "dayUp": "https://financial-vn.pstatic.net/chart/mobile/world/day/SIcv1_end_up.png",
+   "dayUpTablet": "https://financial-vn.pstatic.net/chart/mobile/world/day/SIcv1_end_up_tablet.png"
+  }
+ },
+ "scriptChartTypes": [
+  "day",
+  "areaMonth",
+  "areaMonthThree",
+  "areaYear",
+  "areaYearThree",
+  "areaYearFive",
+  "areaYearTen"
+ ],
+ "marketIndexTotalInfos": [
+  {
+   "code": "lastClosePrice",
+   "key": "전일",
+   "value": "57.27"
+  },
+  {
+   "code": "openPrice",
+   "key": "시가",
+   "value": "57.25",
+   "compareToPreviousPrice": {
+    "code": "5",
+    "text": "하락",
+    "name": "FALLING"
+   }
+  },
+  {
+   "code": "highPrice",
+   "key": "고가",
+   "value": "57.27",
+   "compareToPreviousPrice": {
+    "code": "3",
+    "text": "보합",
+    "name": "UNCHANGED"
+   }
+  },
+  {
+   "code": "lowPrice",
+   "key": "저가",
+   "value": "56.51",
+   "compareToPreviousPrice": {
+    "code": "5",
+    "text": "하락",
+    "name": "FALLING"
+   }
+  },
+  {
+   "code": "highPriceOf52weeks",
+   "key": "52주 최고",
+   "value": "121.79"
+  },
+  {
+   "code": "lowPriceOf52weeks",
+   "key": "52주 최저",
+   "value": "45.51"
+  }
+ ],
+ "statementSource": null,
+ "nationType": null,
+ "nationName": null,
+ "nextReleaseKoreaDate": null,
+ "calendars": null,
+ "openPrice": 57.25,
+ "highPrice": 57.27,
+ "lowPrice": 56.51,
+ "month": "26.12.",
+ "newPcUrl": "https://stock.naver.com/marketindex/metals/SIcv1",
+ "highPriceOf52Weeks": "121.79"
+}

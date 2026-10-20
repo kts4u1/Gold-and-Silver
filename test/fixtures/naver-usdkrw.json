@@ -1,0 +1,46 @@
+{
+ "exchangeInfo": {
+  "categoryType": "exchange",
+  "reutersCode": "FX_USDKRW",
+  "symbolCode": "USD",
+  "exchangeCode": "USD",
+  "name": "미국 USD",
+  "fullName": null,
+  "description": "하나은행 고시회차",
+  "localTradedAt": "2026-10-20T10:56:53+09:00",
+  "closePrice": "1,328.90",
+  "fluctuations": "-4.60",
+  "fluctuationsRatio": "-0.34",
+  "fluctuationsType": {
+   "code": "5",
+   "text": "하락",
+   "name": "FALLING"
+  },
+  "marketStatus": "OPEN",
+  "priceDataType": "NOTICE_ROUND",
+  "endUrl": "https://m.stock.naver.com/marketindex/exchange/FX_USDKRW",
+  "newPcUrl": "https://stock.naver.com/marketindex/exchange/FX_USDKRW",
+  "unit": "KRW",
+  "degreeCount": 159,
+  "imageChartUrlInfo": {
+   "line": {
+    "month": "https://financial-vn.pstatic.net/chart/mobile/marketindex/month/FX_USDKRW_end.png",
+    "month3": "https://financial-vn.pstatic.net/chart/mobile/marketindex/month3/FX_USDKRW_end.png",
+    "year": "https://financial-vn.pstatic.net/chart/mobile/marketindex/year/FX_USDKRW_end.png",
+    "year3": "https://financial-vn.pstatic.net/chart/mobile/marketindex/year3/FX_USDKRW_end.png",
+    "year5": "https://financial-vn.pstatic.net/chart/mobile/marketindex/year5/FX_USDKRW_end.png",
+    "year10": "https://financial-vn.pstatic.net/chart/mobile/marketindex/year10/FX_USDKRW_end.png"
+   }
+  },
+  "scriptChartTypes": [
+   "day",
+   "areaMonth",
+   "areaMonthThree",
+   "areaYear",
+   "areaYearThree",
+   "areaYearFive",
+   "areaYearTen"
+  ],
+  "calcPrice": "1328.9"
+ }
+}

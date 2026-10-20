@@ -1,0 +1,147 @@
+{
+ "isSuccess": true,
+ "detailCode": "",
+ "message": "",
+ "result": [
+  {
+   "localTradedAt": "2026-10-20T00:00:00+09:00",
+   "closePrice": "176,330",
+   "fluctuationsType": {
+    "code": "5",
+    "text": "하락",
+    "name": "FALLING"
+   },
+   "fluctuations": "-2,630",
+   "fluctuationsRatio": "-1.47",
+   "openPrice": "0",
+   "highPrice": "0",
+   "lowPrice": "0"
+  },
+  {
+   "localTradedAt": "2026-10-19T00:00:00+09:00",
+   "closePrice": "178,960",
+   "fluctuationsType": {
+    "code": "5",
+    "text": "하락",
+    "name": "FALLING"
+   },
+   "fluctuations": "-240",
+   "fluctuationsRatio": "-0.13",
+   "openPrice": "0",
+   "highPrice": "0",
+   "lowPrice": "0"
+  },
+  {
+   "localTradedAt": "2026-10-16T00:00:00+09:00",
+   "closePrice": "179,200",
+   "fluctuationsType": {
+    "code": "2",
+    "text": "상승",
+    "name": "RISING"
+   },
+   "fluctuations": "150",
+   "fluctuationsRatio": "0.08",
+   "openPrice": "0",
+   "highPrice": "0",
+   "lowPrice": "0"
+  },
+  {
+   "localTradedAt": "2026-10-15T00:00:00+09:00",
+   "closePrice": "179,050",
+   "fluctuationsType": {
+    "code": "5",
+    "text": "하락",
+    "name": "FALLING"
+   },
+   "fluctuations": "-130",
+   "fluctuationsRatio": "-0.07",
+   "openPrice": "0",
+   "highPrice": "0",
+   "lowPrice": "0"
+  },
+  {
+   "localTradedAt": "2026-10-14T00:00:00+09:00",
+   "closePrice": "179,180",
+   "fluctuationsType": {
+    "code": "5",
+    "text": "하락",
+    "name": "FALLING"
+   },
+   "fluctuations": "-1,920",
+   "fluctuationsRatio": "-1.06",
+   "openPrice": "0",
+   "highPrice": "0",
+   "lowPrice": "0"
+  },
+  {
+   "localTradedAt": "2026-10-13T00:00:00+09:00",
+   "closePrice": "181,100",
+   "fluctuationsType": {
+    "code": "2",
+    "text": "상승",
+    "name": "RISING"
+   },
+   "fluctuations": "1,130",
+   "fluctuationsRatio": "0.63",
+   "openPrice": "0",
+   "highPrice": "0",
+   "lowPrice": "0"
+  },
+  {
+   "localTradedAt": "2026-10-12T00:00:00+09:00",
+   "closePrice": "179,970",
+   "fluctuationsType": {
+    "code": "2",
+    "text": "상승",
+    "name": "RISING"
+   },
+   "fluctuations": "2,490",
+   "fluctuationsRatio": "1.40",
+   "openPrice": "0",
+   "highPrice": "0",
+   "lowPrice": "0"
+  },
+  {
+   "localTradedAt": "2026-10-08T00:00:00+09:00",
+   "closePrice": "177,480",
+   "fluctuationsType": {
+    "code": "5",
+    "text": "하락",
+    "name": "FALLING"
+   },
+   "fluctuations": "-1,270",
+   "fluctuationsRatio": "-0.71",
+   "openPrice": "0",
+   "highPrice": "0",
+   "lowPrice": "0"
+  },
+  {
+   "localTradedAt": "2026-10-07T00:00:00+09:00",
+   "closePrice": "178,750",
+   "fluctuationsType": {
+    "code": "5",
+    "text": "하락",
+    "name": "FALLING"
+   },
+   "fluctuations": "-250",
+   "fluctuationsRatio": "-0.14",
+   "openPrice": "0",
+   "highPrice": "0",
+   "lowPrice": "0"
+  },
+  {
+   "localTradedAt": "2026-10-06T00:00:00+09:00",
+   "closePrice": "179,000",
+   "fluctuationsType": {
+    "code": "5",
+    "text": "하락",
+    "name": "FALLING"
+   },
+   "fluctuations": "-3,770",
+   "fluctuationsRatio": "-2.06",
+   "openPrice": "0",
+   "highPrice": "0",
+   "lowPrice": "0"
+  }
+ ]
+}

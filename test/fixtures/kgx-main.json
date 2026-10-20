@@ -1,0 +1,276 @@
+{
+ "date": "2026-10-20 10:58:35",
+ "marketPriceList": [
+  {
+   "date": "2026-10-20 10:58:35",
+   "askDiff": -10.72,
+   "bidDiff": -5.74,
+   "priceGram": 70377.36,
+   "ask": 1645.48,
+   "type": "pt",
+   "bid": 1640.96,
+   "bidDiffPer": -0.35,
+   "askDiffPer": -0.65
+  },
+  {
+   "date": "2026-10-20 10:58:35",
+   "askDiff": -0.55,
+   "bidDiff": -0.55,
+   "priceGram": 2439.61,
+   "ask": 57.04,
+   "type": "ag",
+   "bid": 56.91,
+   "bidDiffPer": -0.97,
+   "askDiffPer": -0.96
+  },
+  {
+   "date": "2026-10-20 10:58:35",
+   "askDiff": -41.64,
+   "bidDiff": -41.64,
+   "priceGram": 176705.98,
+   "ask": 4131.53,
+   "type": "au",
+   "bid": 4128.73,
+   "bidDiffPer": -1.01,
+   "askDiffPer": -1.01
+  },
+  {
+   "date": "2026-10-20 10:58:35",
+   "askDiff": -15,
+   "bidDiff": -15,
+   "priceGram": 47763.52,
+   "ask": 1116.75,
+   "type": "pd",
+   "bid": 1112.25,
+   "bidDiffPer": -1.35,
+   "askDiffPer": -1.34
+  }
+ ],
+ "wholesaleEtcList": [
+  {
+   "date": "2026-10-20 10:58:35",
+   "price": 126500.0,
+   "typeName": "청화금",
+   "standardPrice": 12650000.0,
+   "diff": -2100.0,
+   "closedPrice": 128600,
+   "type": "GC"
+  },
+  {
+   "date": "2026-10-20 10:58:35",
+   "price": 2367.0,
+   "typeName": "청화은",
+   "standardPrice": 2367000.0,
+   "diff": -26.0,
+   "closedPrice": 2393,
+   "type": "SC"
+  },
+  {
+   "date": "2026-10-20 10:58:35",
+   "price": 2948.0,
+   "typeName": "은판",
+   "standardPrice": 2948000.0,
+   "diff": 333.0,
+   "closedPrice": 2615,
+   "type": "SP"
+  },
+  {
+   "date": "2026-10-20 10:58:35",
+   "price": 500000,
+   "typeName": "이리듐",
+   "standardPrice": 50000000,
+   "diff": 0.0,
+   "closedPrice": 500000,
+   "type": "IR"
+  },
+  {
+   "date": "2026-10-20 10:58:35",
+   "price": 1604.0,
+   "typeName": "청화은가리",
+   "standardPrice": 1604000.0,
+   "diff": 168.0,
+   "closedPrice": 1436,
+   "type": "PSC"
+  },
+  {
+   "date": "2026-10-20 10:58:35",
+   "price": 1874.0,
+   "typeName": "질산은",
+   "standardPrice": 1874000.0,
+   "diff": 203.0,
+   "closedPrice": 1671,
+   "type": "SN"
+  }
+ ],
+ "exchangeList": [
+  {
+   "date": "2026-10-20 10:58:35",
+   "askDiff": 0,
+   "bidDiff": -0.49,
+   "ask": 1330.3,
+   "type": "USD",
+   "bid": 1328.6,
+   "bidDiffPer": -0.04,
+   "askDiffPer": 0
+  },
+  {
+   "date": "2026-10-20 10:58:35",
+   "askDiff": -1.85,
+   "bidDiff": -2.12,
+   "ask": 838.57,
+   "type": "JPY",
+   "bid": 838.07,
+   "bidDiffPer": -0.25,
+   "askDiffPer": -0.22
+  },
+  {
+   "date": "2026-10-20 10:58:35",
+   "askDiff": 0.93,
+   "bidDiff": 0.25,
+   "ask": 1491.61,
+   "type": "EUR",
+   "bid": 1490.56,
+   "bidDiffPer": 0.02,
+   "askDiffPer": 0.06
+  },
+  {
+   "date": "2026-10-20 10:58:35",
+   "askDiff": 0.07,
+   "bidDiff": -0.01,
+   "ask": 199.03,
+   "type": "CNY",
+   "bid": 198.9,
+   "bidDiffPer": -0.01,
+   "askDiffPer": 0.04
+  }
+ ],
+ "exchangeRate": {
+  "date": "2026-10-20 10:58:35",
+  "askDiff": 0,
+  "bidDiff": -0.49,
+  "ask": 1330.3,
+  "type": "USD",
+  "bid": 1328.6,
+  "bidDiffPer": -0.04,
+  "askDiffPer": 0
+ },
+ "wholesaleList": [
+  {
+   "date": "2026-10-20 10:58:35",
+   "globalPrice": 176706.0,
+   "priceGram": 189787.0,
+   "price": 711700,
+   "globalPriceDon": 662648.0,
+   "typeName": "금",
+   "diff": -16000.0,
+   "closedPrice": 727700,
+   "type": "Au"
+  },
+  {
+   "date": "2026-10-20 10:58:35",
+   "globalPrice": 2439.7000000000003,
+   "priceGram": 3405.0,
+   "price": 12770,
+   "globalPriceDon": 9149.0,
+   "typeName": "은",
+   "diff": -210.0,
+   "closedPrice": 12980,
+   "type": "Ag"
+  },
+  {
+   "date": "2026-10-20 10:58:35",
+   "globalPrice": 70378.0,
+   "priceGram": 75200.0,
+   "price": 282000,
+   "globalPriceDon": 263918.0,
+   "typeName": "백금",
+   "diff": -3000.0,
+   "closedPrice": 285000,
+   "type": "Pt"
+  },
+  {
+   "date": "2026-10-20 10:58:35",
+   "globalPrice": 47764.0,
+   "priceGram": 51200.0,
+   "price": 192000,
+   "globalPriceDon": 179115.0,
+   "typeName": "파라듐",
+   "diff": -3000.0,
+   "closedPrice": 195000,
+   "type": "Pd"
+  }
+ ],
+ "securityList": [
+  {
+   "date": "2026-10-20 10:58:35",
+   "gprice": 178487,
+   "diffPer": -1.01,
+   "premium": 1.01,
+   "price": 1784730.0,
+   "ask": 176705.98,
+   "typeName": "골드바 10g",
+   "weight": 10,
+   "diff": -17988.0,
+   "type": "AU"
+  },
+  {
+   "date": "2026-10-20 10:58:35",
+   "gprice": 2463,
+   "diffPer": -0.96,
+   "premium": 1.08,
+   "price": 2634876.0,
+   "ask": 2439.61,
+   "typeName": "실버바 1kg",
+   "weight": 1000,
+   "diff": -25164.0,
+   "type": "AG"
+  }
+ ],
+ "purchaseList": [
+  {
+   "diffPer": -1.35,
+   "date": "2026-10-20 09:49:30",
+   "previousePrice": 668000,
+   "price": 659000,
+   "typeName": "순금시세",
+   "diff": -9000,
+   "type": "PURE_GOLD"
+  },
+  {
+   "diffPer": -1.34,
+   "date": "2026-10-20 09:49:30",
+   "previousePrice": 490900,
+   "price": 484300,
+   "typeName": "18k 금시세",
+   "diff": -6600,
+   "type": "18K_GOLD"
+  },
+  {
+   "diffPer": -1.34,
+   "date": "2026-10-20 09:49:30",
+   "previousePrice": 380700,
+   "price": 375600,
+   "typeName": "14k 금시세",
+   "diff": -5100,
+   "type": "14K_GOLD"
+  },
+  {
+   "diffPer": -0.8,
+   "date": "2026-10-20 09:49:30",
+   "previousePrice": 249000,
+   "price": 247000,
+   "typeName": "백금시세",
+   "diff": -2000,
+   "type": "PLATINUM"
+  },
+  {
+   "diffPer": -1.51,
+   "date": "2026-10-20 09:49:30",
+   "previousePrice": 8610,
+   "price": 8480,
+   "typeName": "은시세",
+   "diff": -130,
+   "type": "SILVER"
+  }
+ ]
+}
