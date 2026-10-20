@@ -923,21 +923,41 @@ function renderManualList() {
   );
 }
 
+function sourceItem(s) {
+  const [cls, text] = s.ok ? ['ok', '✓ 정상'] : s.stale ? ['stale', '! 지연'] : ['fail', '✕ 실패'];
+  const detail = [];
+  if (s.fetchedAt) detail.push(`${when(s.fetchedAt)} 수집`);
+  if (s.error) detail.push(s.error);
+  for (const w of s.warnings ?? []) detail.push(w);
+  return h(
+    'li',
+    null,
+    h('span', { class: `status ${cls}` }, text),
+    h('div', null, link(s.url, s.name), h('div', { class: 'muted small' }, detail.join(' · '))),
+  );
+}
+
 function renderSources() {
+  // 시세 출처를 먼저, 매장 목록 출처(하루 한 번 갱신)는 접어서 따로 보여 줍니다
+  const isStoreList = (s) => /-stores$/.test(s.id);
+  const prices = state.data.sources.filter((s) => !isStoreList(s));
+  const stores = state.data.sources.filter(isStoreList);
+  const storeCount = (state.data.branches ?? []).length;
+  const bad = stores.filter((s) => !s.ok).length;
   $('#sources').replaceChildren(
-    ...state.data.sources.map((s) => {
-      const [cls, text] = s.ok ? ['ok', '✓ 정상'] : s.stale ? ['stale', '! 지연'] : ['fail', '✕ 실패'];
-      const detail = [];
-      if (s.fetchedAt) detail.push(`${when(s.fetchedAt)} 수집`);
-      if (s.error) detail.push(s.error);
-      for (const w of s.warnings ?? []) detail.push(w);
-      return h(
-        'li',
-        null,
-        h('span', { class: `status ${cls}` }, text),
-        h('div', null, link(s.url, s.name), h('div', { class: 'muted small' }, detail.join(' · '))),
-      );
-    }),
+    ...prices.map(sourceItem),
+    stores.length
+      ? h(
+          'li',
+          { class: 'sources-group' },
+          h(
+            'details',
+            null,
+            h('summary', null, `매장 목록 출처 ${stores.length}곳 · 매장 ${storeCount}곳 (하루 한 번 갱신)${bad ? ` · 확인 필요 ${bad}곳` : ''}`),
+            h('ul', { class: 'sources' }, ...stores.map(sourceItem)),
+          ),
+        )
+      : null,
   );
   $('#not-covered').textContent =
     '자동으로 모으지 못하는 곳: KB국민·신한·우리·NH농협 은행 골드바, 한국표준금거래소 본사 시세(해외 접속 차단, 국내에서 실행하면 수집), 순금나라·한국금거래소 소매 사이트(접속 차단), 홈페이지가 없는 동네 금은방. 이런 곳의 가격은 "내가 받은 견적 비교하기"에 넣으면 함께 비교됩니다.';
