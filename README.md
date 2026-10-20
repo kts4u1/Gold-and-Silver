@@ -26,6 +26,24 @@ npm start          # http://localhost:3000
 
 시세는 1분(조폐공사는 5분)마다 서버가 새로 가져오고, 화면은 1분마다 자동으로 갱신됩니다.
 
+## GitHub Pages로 공개하기
+
+서버 없이 `https://<아이디>.github.io/Gold-and-Silver/` 주소로 열 수 있습니다. GitHub Actions가 약 15분마다 시세를 모아 `data/prices.json`으로 저장하고, 화면과 함께 배포합니다 (`.github/workflows/pages.yml`).
+
+**처음 한 번만 설정**
+
+1. 저장소의 **Settings → Pages → Build and deployment → Source** 를 **GitHub Actions** 로 선택합니다.
+2. **Actions** 탭에서 `Deploy to GitHub Pages`를 열고 **Run workflow** 를 누릅니다 (이후에는 15분마다 자동 실행).
+3. 완료되면 위 주소로 접속합니다.
+
+**알아둘 점**
+
+- 시세를 가져오는 서버가 해외(미국)에 있어서 일부 사이트가 막을 수 있습니다. 못 가져온 곳은 화면 아래 "데이터 출처"에 실패로 표시되고, 나머지 출처로 비교합니다. 가격이 하나도 없으면 배포하지 않고 이전 사이트를 그대로 둡니다.
+- 화면 속 시세는 최대 15분 정도 늦을 수 있습니다. 실시간에 가까운 값이 필요하면 `npm start`로 직접 실행하세요.
+- GitHub는 저장소에 활동이 60일 동안 없으면 예약 실행을 멈춥니다. 멈추면 Actions 탭에서 다시 켜면 됩니다.
+- 예약 실행과 Pages 배포는 저장소의 **기본 브랜치**에서만 동작합니다. 기본 브랜치를 바꾸면 Settings → Environments → github-pages 의 배포 허용 브랜치도 확인하세요.
+- 내 컴퓨터에서 같은 결과물을 만들어 보려면 `npm run build` (결과: `dist/`).
+
 ## 조사한 시세 출처
 
 **시세·은행·공기관**
@@ -85,12 +103,16 @@ npm start          # http://localhost:3000
 ## 개발
 
 ```bash
+npm run build  # GitHub Pages용 정적 사이트를 dist/에 생성 (시세를 한 번 모아 저장)
 npm test     # 파서·계산 로직 테스트 (저장해 둔 실제 응답 샘플 사용, 네트워크 불필요)
 npm run dev  # 파일이 바뀌면 서버 자동 재시작
 ```
 
 ```
 server.js              Express 서버: /api/prices, 정적 파일
+src/static-build.js    서버 없는 정적 사이트(GitHub Pages) 생성
+scripts/build-static.js  위 기능을 실행하는 명령
+.github/workflows/     GitHub Pages 자동 배포 (15분마다 시세 갱신)
 src/collect.js         출처별 캐시·실패 시 마지막 데이터 유지·결과 합치기
 src/sources/*.js       출처별 수집기 (naver, hana, komsco, kgx, ksgold, goldmarket, kgs, ssgold, goldie)
 src/sources/shops.js   매장 고시가·쇼핑몰 상품을 비교용 구매처로 바꾸는 공통 코드
