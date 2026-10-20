@@ -7,10 +7,10 @@
     <meta name="description" content="골드바·실버바를 어디서 사야 가장 싼지 실시간 시세로 비교합니다. KRX 금시장, 은행, 조폐공사 가격을 한눈에." />
     <meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/style.css" />
-    <script type="module" src="/app.js"></script>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="app.js"></script>
   </head>
   <body>
     <header class="top">
@@ -153,6 +153,7 @@
       <footer>
         <p>가격은 각 출처가 공개한 값을 자동으로 모아 계산한 참고용 정보입니다. 실제 구매 전에 판매처에서 최종 가격·재고·수수료를 꼭 확인하세요.</p>
         <p>투자 권유가 아니며, 이 정보로 인한 손익에 책임지지 않습니다.</p>
+        <p id="static-note" hidden>이 화면은 GitHub Actions가 약 15분마다 시세를 모아 저장한 사본입니다. 실시간 값과 몇 분 차이가 날 수 있어요.</p>
       </footer>
     </main>
   </body>

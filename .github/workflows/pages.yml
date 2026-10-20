@@ -1,0 +1,43 @@
+name: Deploy to GitHub Pages
+
+# 약 15분마다 시세를 새로 모아 사이트를 다시 배포합니다.
+# (GitHub 예약 실행은 몇 분 늦게 시작될 수 있습니다)
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  push:
+    branches: [main, claude/sweet-goldberg-1xz18q]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 배포가 겹치면 최신 것만 남깁니다
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: 시세 수집 후 정적 사이트 만들기
+        run: node scripts/build-static.js dist
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

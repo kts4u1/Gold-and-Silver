@@ -6,11 +6,12 @@ import {
   GRAMS_PER_DON,
   rankByPerGram,
   rankOffers,
-} from '/shared/compare.js';
-import { renderLineChart } from '/chart.js';
+} from './shared/compare.js';
+import { renderLineChart } from './chart.js';
 
 const REFRESH_MS = 60 * 1000;
 const PERGRAM_PREVIEW = 8;
+const IS_STATIC = document.querySelector('meta[name="data-mode"]')?.content === 'static';
 const $ = (sel) => document.querySelector(sel);
 
 // ---------- 저장 (이 기기에만, 실패해도 동작) ----------
@@ -146,7 +147,9 @@ async function load(force = false) {
   $('#main').classList.toggle('is-loading', Boolean(state.data));
   $('#refresh').disabled = true;
   try {
-    const res = await fetch(`/api/prices${force ? '?refresh=1' : ''}`, { cache: 'no-store' });
+    // GitHub Pages 같은 정적 배포본은 서버 대신 미리 저장된 data/prices.json을 읽습니다
+    const url = IS_STATIC ? 'data/prices.json' : `api/prices${force ? '?refresh=1' : ''}`;
+    const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) throw new Error(`서버 오류 (${res.status})`);
     state.data = await res.json();
     render();
@@ -671,6 +674,7 @@ new ResizeObserver(([entry]) => {
   }
 }).observe($('#chart'));
 
+if (IS_STATIC) $('#static-note').hidden = false;
 load();
 setInterval(() => {
   if (document.visibilityState === 'visible') load();
