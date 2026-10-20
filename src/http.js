@@ -3,6 +3,21 @@ const USER_AGENT =
 
 class HttpError extends Error {}
 
+/** 응답 글자 인코딩을 헤더나 <meta>에서 찾아 해석합니다 (EUC-KR로 된 오래된 사이트용). 모르면 UTF-8. */
+export function decodeBody(buffer, contentType) {
+  const bytes = new Uint8Array(buffer);
+  let charset = /charset=["']?([\w-]+)/i.exec(contentType ?? '')?.[1];
+  if (!charset) {
+    const head = new TextDecoder('latin1').decode(bytes.subarray(0, 2048));
+    charset = /<meta[^>]+charset=["']?([\w-]+)/i.exec(head)?.[1];
+  }
+  try {
+    return new TextDecoder(charset || 'utf-8').decode(bytes);
+  } catch {
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+}
+
 /**
  * 타임아웃이 있는 fetch. 2xx가 아니면 예외를 던집니다.
  * 연결이 끊기는 등 네트워크 오류는 한 번 더 시도합니다 (HTTP 오류 응답은 재시도하지 않음).
@@ -22,7 +37,7 @@ export async function fetchText(url, { method = 'GET', form, headers = {}, timeo
     try {
       const res = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
       if (!res.ok) throw new HttpError(`HTTP ${res.status} (${new URL(url).host})`);
-      return await res.text();
+      return decodeBody(await res.arrayBuffer(), res.headers.get('content-type'));
     } catch (err) {
       if (err instanceof HttpError) throw err;
       if (attempt >= retries) {

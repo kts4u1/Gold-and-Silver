@@ -1,6 +1,7 @@
 // 모든 출처에서 시세와 구매처 가격을 모아 하나로 합칩니다.
 // 출처마다 캐시를 두고, 실패하면 마지막으로 성공한 데이터를 "지연됨" 표시와 함께 돌려줍니다.
-import { spotKrwPerGram } from '../shared/compare.js';
+import { GRAMS_PER_DON, spotKrwPerGram } from '../shared/compare.js';
+import { DEALERS, fetchDealer } from './sources/dealers.js';
 import { fetchGoldie } from './sources/goldie.js';
 import { fetchGoldmarket } from './sources/goldmarket.js';
 import { fetchHana } from './sources/hana.js';
@@ -86,6 +87,14 @@ export const SOURCES = [
     ttlMs: 10 * MINUTE,
     fetch: fetchGoldie,
   },
+  // ---- 금거래소·금은방 사업자 홈페이지 (시세 + 골드바 판매가 + 지점 목록) ----
+  ...DEALERS.map((def) => ({
+    id: def.id,
+    name: `${def.name}${def.quote === 'gbk' ? '' : ' (시세·판매가·지점)'}`,
+    url: def.url,
+    ttlMs: 15 * MINUTE,
+    fetch: () => fetchDealer(def),
+  })),
 ];
 
 export function createCollector(sources = SOURCES, now = () => Date.now()) {
@@ -117,6 +126,7 @@ export function createCollector(sources = SOURCES, now = () => Date.now()) {
     const market = {};
     const offers = [];
     const shops = [];
+    const branches = [];
     const statuses = [];
 
     results.forEach((r, i) => {
@@ -125,6 +135,7 @@ export function createCollector(sources = SOURCES, now = () => Date.now()) {
         Object.assign(market, r.data.market);
         offers.push(...r.data.offers);
         shops.push(...(r.data.shops ?? []));
+        branches.push(...(r.data.branches ?? []));
       }
       statuses.push({
         id: src.id,
@@ -139,7 +150,19 @@ export function createCollector(sources = SOURCES, now = () => Date.now()) {
     });
 
     market.spot = computeSpot(market);
-    return { generatedAt: new Date(now()).toISOString(), market, offers, shops, sources: statuses };
+    const clean = dropImplausible({ shops, offers }, market.spot, { now: now() });
+    for (const d of clean.dropped) {
+      const st = statuses.find((x) => x.id === d.source);
+      if (st) st.warnings = [...st.warnings, d.reason];
+    }
+    return {
+      generatedAt: new Date(now()).toISOString(),
+      market,
+      offers: clean.offers,
+      shops: clean.shops,
+      branches,
+      sources: statuses,
+    };
   };
 }
 
@@ -162,4 +185,53 @@ export function computeSpot(m) {
     return null;
   };
   return { usdKrw, gold: pick('gold', m.intlGold), silver: pick('silver', m.intlSilver) };
+}
+
+/**
+ * 국제 시세와 너무 동떨어진 가격은 화면 구조가 바뀌어 엉뚱한 칸을 읽은 것일 가능성이 커서 걸러냅니다.
+ * 순위에 잘못된 "최저가"가 올라가는 것보다 빠지는 편이 안전합니다.
+ */
+export function dropImplausible({ shops, offers }, spot, { vatRate = 0.1, now = Date.now(), maxAgeDays = 7 } = {}) {
+  const dropped = [];
+  const goldDon = spot?.gold?.perGram ? spot.gold.perGram * GRAMS_PER_DON : null;
+  const badShopIds = new Set();
+  const staleSources = new Set();
+  const today = new Date(now + 9 * 3600 * 1000).toISOString().slice(0, 10);
+
+  const keptShops = shops.filter((shop) => {
+    // 홈페이지 시세가 며칠째 그대로(갱신 안 됨)이면 지금 가격이 아니므로 제외
+    if (shop.date) {
+      const age = Math.round((Date.parse(today) - Date.parse(shop.date)) / 86400000);
+      if (age > maxAgeDays) {
+        badShopIds.add(shop.id);
+        staleSources.add(shop.source);
+        dropped.push({ source: shop.source, reason: `${shop.name}: 시세 날짜가 ${shop.date}로 ${age}일 전이라 제외했습니다` });
+        return false;
+      }
+    }
+    const g = shop.prices?.gold24k;
+    if (!goldDon || !g) return true;
+    const buy = g.buy && !shop.buyIsReference ? g.buy * (shop.buyVatIncluded ? 1 : 1 + vatRate) : null;
+    const reasons = [];
+    if (g.sell && (g.sell < goldDon * 0.85 || g.sell > goldDon * 1.1)) reasons.push(`팔 때 ${g.sell.toLocaleString('ko-KR')}원`);
+    if (buy && (buy < goldDon * 0.95 || buy > goldDon * 1.6)) reasons.push(`살 때 ${Math.round(buy).toLocaleString('ko-KR')}원`);
+    if (!reasons.length) return true;
+    badShopIds.add(shop.id);
+    dropped.push({ source: shop.source, reason: `${shop.name}: ${reasons.join('·')}이(가) 국제 시세(1돈 약 ${Math.round(goldDon).toLocaleString('ko-KR')}원)와 너무 달라 제외했습니다` });
+    return false;
+  });
+
+  const keptOffers = offers.filter((o) => {
+    if (badShopIds.has(o.channelId) || staleSources.has(o.source)) return false;
+    if (o.kind !== 'fixed') return true;
+    const per = spot?.[o.metal]?.perGram;
+    if (!per) return true;
+    const perGram = (o.vatIncluded ? o.unitPrice : o.unitPrice * (1 + vatRate)) / o.sizeG;
+    const [lo, hi] = o.metal === 'gold' ? [0.95, 2.2] : [0.95, 3.5];
+    if (perGram >= per * lo && perGram <= per * hi) return true;
+    dropped.push({ source: o.source, reason: `${o.channelName} ${o.sizeG}g: g당 ${Math.round(perGram).toLocaleString('ko-KR')}원이 국제 시세와 너무 달라 제외했습니다` });
+    return false;
+  });
+
+  return { shops: keptShops, offers: keptOffers, dropped };
 }

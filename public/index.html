@@ -55,6 +55,19 @@
         <p id="shops-foot" class="muted small"></p>
       </section>
 
+      <section id="branches-section" aria-labelledby="branches-title" hidden>
+        <h2 id="branches-title">전국 매장 찾기</h2>
+        <p class="muted small">금거래소·금은방 사업자가 홈페이지에 공개한 지점 목록입니다. 시세는 지점마다 조금 다를 수 있으니 방문 전에 전화로 오늘 시세를 확인하세요.</p>
+        <div class="card branch-controls">
+          <label>지역 <select id="branch-region"></select></label>
+          <label>업체 <select id="branch-chain"></select></label>
+          <label class="grow">이름·주소 검색 <input id="branch-q" type="search" placeholder="예: 강남, 해운대, 달서" autocomplete="off" /></label>
+        </div>
+        <p class="muted small" aria-live="polite">검색 결과 <strong id="branches-count"></strong></p>
+        <ul id="branches-list" class="branch-list"></ul>
+        <button id="branches-more" class="btn more" type="button" hidden></button>
+      </section>
+
       <section aria-labelledby="finder-title">
         <h2 id="finder-title">최저가 찾기</h2>
         <div class="card controls">
