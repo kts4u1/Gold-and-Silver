@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { createCollector, seedFromPrevious } from '../src/collect.js';
 import {
   DEALERS,
+  fetchDealer,
   fetchDealerStores,
   finishBranches,
   parseJungangBranches,
@@ -16,9 +17,11 @@ import {
   parseKoreagoldQuote,
   parseSamsungBranchDetail,
   parseSamsungBranchList,
+  parseGwangjuQuote,
   parseSamsungQuote,
   quoteToShop,
 } from '../src/sources/dealers.js';
+import { flatTokens } from '../src/sources/util.js';
 import { fetchKgsBusanStores, parseKgsBusanBranches } from '../src/sources/kgs.js';
 import { parseKgxStores, parseKsgoldStores } from '../src/sources/ksgold.js';
 
@@ -188,5 +191,58 @@ describe('지점 목록은 드물게 받습니다', () => {
     assert.equal(seedFromPrevious(src, previous, NOW + 22 * 3600_000), null);
     assert.equal(seedFromPrevious({ ...src, ttlMs: 15 * 60_000 }, previous, NOW), null);
     assert.ok(seedFromPrevious(src, previous, NOW));
+  });
+});
+
+describe('지방 개인 금은방 시세 (사이트마다 다른 화면)', () => {
+  const shopsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures', 'shops');
+  const page = (f) => fs.readFileSync(path.join(shopsDir, `${f}.html`), 'utf8');
+  const collect = async (id, file) => {
+    fakeFetch(() => page(file));
+    return fetchDealer(def(id));
+  };
+  const cases = [
+    // [사업자, 샘플, 살 때, 팔 때, 살 때 부가세 포함?, 날짜]
+    ['busangoldx', 'busan-beomil-goldx', 700_000, 675_000, false, '2026-10-20'], // 팔때 칸이 먼저, 날짜는 표 밖
+    ['daesunggold', 'daesung-daegu', 760_000, 675_000, true, '2026-10-20'],
+    ['kgoldsongdo', 'kgold-songdo', 720_000, 672_000, false, '2026-10-20'],
+    ['sstgold', 'sstgold-suwon', 772_000, 668_000, true, '2026-10-20'], // 값 줄에만 있는 변동폭 칸을 빼고 셈
+    ['bucheongold', 'bucheongold', 769_500, 668_500, true, '2026-10-20'], // "₩769,500"
+    ['goldworld', 'goldworld-jinju', 700_000, 670_000, false, '2026-10-20'],
+    ['usgold', 'usgold-ulsan', 710_000, 667_000, false, '2026-10-20'], // 열이 금속인 표, 부가세는 설정값
+    ['gwangjugold', 'gwangju-gamjeong', 695_000, 677_000, false, null], // 날짜는 아래에서 따로 확인
+    ['jejugold', 'jejugold', 700_000, 675_000, false, null], // 날짜 없음
+  ];
+  for (const [id, file, buy, sell, vat, date] of cases) {
+    it(`${def(id).name}: 살 때 ${buy.toLocaleString('ko-KR')} / 팔 때 ${sell.toLocaleString('ko-KR')}`, async () => {
+      const { shops, offers } = await collect(id, file);
+      assert.deepEqual(shops[0].prices.gold24k, { buy, sell });
+      assert.equal(shops[0].buyVatIncluded, vat);
+      if (date) assert.equal(shops[0].date, date);
+      assert.equal(offers.length, 1); // 순금 1돈 살 때 → 3.75g 구매처
+    });
+  }
+
+  it('광주감정금거래소: 연도 없는 "[10/20]"은 올해, 오늘보다 뒤면 작년으로 봅니다', () => {
+    const tokens = flatTokens(page('gwangju-gamjeong'));
+    assert.equal(parseGwangjuQuote(tokens, { now: Date.parse('2026-10-21T00:00:00Z') }).date, '2026-10-20');
+    assert.equal(parseGwangjuQuote(tokens, { now: Date.parse('2027-01-05T00:00:00Z') }).date, '2026-10-20');
+    const q = parseGwangjuQuote(tokens, { now: Date.parse('2026-10-21T00:00:00Z') });
+    assert.deepEqual(q.prices.gold18k, { buy: 570_000, sell: 509_000 });
+  });
+
+  it('팔 때 시세만 올린 날(창원 비비주얼리·구미 더드림)은 팔 때만 보여 주고 구매 순위에는 넣지 않습니다', async () => {
+    for (const [id, file, sell] of [['bbgold', 'bbgold-changwon', 668_000], ['thedreamgold', 'thedream-gumi', 675_000]]) {
+      const { shops, offers } = await collect(id, file);
+      assert.deepEqual(shops[0].prices.gold24k, { buy: null, sell });
+      assert.equal(shops[0].date, '2026-10-20');
+      assert.equal(offers.length, 0);
+      assert.match(shops[0].notes.join(), /팔 때\(매입\) 시세만/);
+    }
+  });
+
+  it('국제금거래소 울산점 매장에는 울산점 자체 시세를 붙입니다', () => {
+    const list = finishBranches(def('kggold'), parseKggoldBranches(html('kggold-branches.html')));
+    assert.deepEqual(list.map((b) => b.quoteId), ['kggold', 'usgold', 'kggold']);
   });
 });
