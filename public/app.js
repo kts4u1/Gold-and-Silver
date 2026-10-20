@@ -169,7 +169,7 @@ function render() {
   }
   renderTiles();
   renderChart();
-  renderSellRef();
+  renderShops();
   renderFinder();
   renderPerGram();
   renderManualList();
@@ -229,14 +229,17 @@ function renderTiles() {
     );
   }
 
+  // 금은방에 팔 때 기준: 한국금거래소 소비자 고시가, 없으면 사업자 매입시세
+  const key = metal === 'gold' ? 'gold24k' : 'silver';
+  const kgxRetail = (state.data.shops ?? []).find((s) => s.id === 'kgx-retail');
   const buyBack = m.kgx?.purchase?.find((p) => p.type === (metal === 'gold' ? 'PURE_GOLD' : 'SILVER'));
+  const sellPrice = kgxRetail?.prices?.[key]?.sell ?? buyBack?.perDon;
   tiles.push(
     tile(
       metal === 'gold' ? '팔 때 기준 (순금 1돈)' : '팔 때 기준 (은 3.75g)',
-      buyBack ? num(buyBack.perDon) : '-',
+      sellPrice ? num(sellPrice) : '-',
       '원',
-      delta(buyBack?.changePct),
-      ' · 한국금거래소 매입시세',
+      kgxRetail?.prices?.[key]?.sell ? '한국금거래소 고시가' : [delta(buyBack?.changePct), ' · 한국금거래소 매입시세'],
     ),
   );
 
@@ -284,50 +287,100 @@ function renderChart() {
   });
 }
 
-function renderSellRef() {
-  const kgx = state.data.market.kgx;
-  const box = $('#sell-ref');
-  if (!kgx) {
-    box.replaceChildren(h('p', { class: 'muted small' }, '한국금거래소 시세를 불러오지 못했습니다.'));
+/** 매장 시세 기준 시각 표시. 날짜만 있으면 날짜, 오래됐으면 며칠 전인지 */
+function shopWhen(shop) {
+  if (shop.at) return when(shop.at);
+  if (!shop.date) return '시각 미표기';
+  const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+  const days = Math.round((Date.parse(today) - Date.parse(shop.date)) / 86400000);
+  const label = shortDate(shop.date);
+  return days >= 1 ? `${label} (${days}일 전)` : `${label} (오늘)`;
+}
+
+/** 살 때 가격을 부가세 포함으로 맞춥니다 (비교용) */
+function buyWithVat(shop, price) {
+  return shop.buyVatIncluded ? price : Math.round(price * (1 + state.settings.vatRate));
+}
+
+function renderShops() {
+  const shops = state.data.shops ?? [];
+  const isGold = state.metal === 'gold';
+  const key = isGold ? 'gold24k' : 'silver';
+  const unit = isGold ? '순금 1돈' : '은 3.75g';
+  const rows = shops.filter((s) => s.prices?.[key]?.buy || s.prices?.[key]?.sell);
+
+  $('#shops-sub').textContent = `서울 종로·강남, 부산 매장과 금 매입 플랫폼이 매일 고시하는 ${unit} 가격입니다. 매장마다 매일 시세가 바뀝니다.`;
+
+  // 살 때 최저(참고값 제외, 부가세 포함으로 맞춤) · 팔 때 최고
+  const buyable = rows.filter((s) => s.prices[key].buy && !s.buyIsReference);
+  const cheapest = buyable.reduce(
+    (a, s) => (!a || buyWithVat(s, s.prices[key].buy) < buyWithVat(a, a.prices[key].buy) ? s : a),
+    null,
+  );
+  const sellable = rows.filter((s) => s.prices[key].sell);
+  const bestSell = sellable.reduce((a, s) => (!a || s.prices[key].sell > a.prices[key].sell ? s : a), null);
+
+  const best = $('#shops-best');
+  if (cheapest || bestSell) {
+    best.replaceChildren(
+      ...(cheapest
+        ? [`${unit} 살 때 가장 싼 곳 `, h('strong', null, `${cheapest.name} ${won(buyWithVat(cheapest, cheapest.prices[key].buy))}`)]
+        : []),
+      cheapest && bestSell ? ' · ' : '',
+      ...(bestSell ? ['팔 때 가장 비싸게 사 주는 곳 ', h('strong', null, `${bestSell.name} ${won(bestSell.prices[key].sell)}`)] : []),
+    );
+    best.hidden = false;
+  } else {
+    best.hidden = true;
+  }
+
+  const head = [
+    h('th', null, '매장'),
+    h('th', { class: 'num' }, `살 때 (${unit})`),
+    h('th', { class: 'num' }, `팔 때 (${unit})`),
+    isGold ? h('th', { class: 'num' }, '팔 때 18K / 14K') : null,
+    h('th', null, '기준'),
+  ];
+  $('#shops-table thead').replaceChildren(h('tr', null, head));
+
+  const tbody = $('#shops-table tbody');
+  if (!rows.length) {
+    tbody.replaceChildren(h('tr', null, h('td', { colspan: head.filter(Boolean).length, class: 'empty' }, '매장 시세를 불러오지 못했습니다.')));
+    $('#shops-foot').textContent = '';
     return;
   }
-  const isGold = state.metal === 'gold';
-  const wholesale = kgx.wholesale?.[state.metal];
-  const rows = [];
-  if (wholesale) rows.push([`국내 도매시세 (${isGold ? '금' : '은'})`, wholesale.perDon, null, wholesale.change]);
-  for (const p of kgx.purchase ?? []) {
-    const isSilver = p.type === 'SILVER';
-    if (isGold === isSilver || p.type === 'PLATINUM') continue;
-    rows.push([`매입시세 · ${p.name}`, p.perDon, p.changePct, p.change]);
-  }
-  const tbody = h(
-    'tbody',
-    null,
-    rows.map(([name, price, pct, change]) =>
-      h(
+
+  tbody.replaceChildren(
+    ...rows.map((s) => {
+      const p = s.prices[key];
+      const buyCell = p.buy
+        ? [
+            won(p.buy),
+            s === cheapest ? h('span', { class: 'badge inline' }, '최저') : null,
+            !s.buyVatIncluded ? h('div', { class: 'cell-note' }, `VAT별도 표기 · 포함 ${won(buyWithVat(s, p.buy))}`) : null,
+            s.buyIsReference ? h('div', { class: 'cell-note' }, '참고용 (구매 순위 제외)') : null,
+          ]
+        : '-';
+      const sellCell = p.sell ? [won(p.sell), s === bestSell ? h('span', { class: 'badge inline' }, '최고') : null] : '-';
+      const k18 = s.prices.gold18k?.sell;
+      const k14 = s.prices.gold14k?.sell;
+      return h(
         'tr',
         null,
-        h('td', null, name),
-        h('td', { class: 'num' }, won(price)),
-        h('td', { class: 'num' }, pct != null ? delta(pct) : change != null ? `${change > 0 ? '+' : ''}${num(change)}원` : '-'),
-      ),
-    ),
+        h('td', null, link(s.url, s.name), h('div', { class: 'cell-note' }, s.region)),
+        h('td', { class: 'num', 'data-label': `살 때 (${unit})` }, buyCell),
+        h('td', { class: 'num', 'data-label': `팔 때 (${unit})` }, sellCell),
+        isGold
+          ? h('td', { class: 'num', 'data-label': '팔 때 18K / 14K' }, k18 || k14 ? `${k18 ? num(k18) : '-'} / ${k14 ? num(k14) : '-'}` : '-')
+          : null,
+        h('td', { class: 'cell-when', 'data-label': '기준' }, shopWhen(s)),
+      );
+    }),
   );
-  box.replaceChildren(
-    h('h3', null, '한국금거래소 시세 (3.75g 기준)'),
-    h(
-      'table',
-      null,
-      h('thead', null, h('tr', null, h('th', null, '구분'), h('th', { class: 'num' }, '가격'), h('th', { class: 'num' }, '변동'))),
-      tbody,
-    ),
-    h(
-      'p',
-      { class: 'muted small' },
-      `도매시세는 사업자 간 거래가, 매입시세는 한국금거래소가 사업자에게서 사들이는 가격입니다. 개인이 금은방에 팔 때는 이보다 조금 낮을 수 있어요. ${when(kgx.at)} 기준 · `,
-      link('https://www.exgold.co.kr/', '출처'),
-    ),
-  );
+
+  $('#shops-foot').textContent = isGold
+    ? '살 때는 부가세 포함 가격입니다. 18K·14K는 살 때 가격이 제품마다 달라 팔 때만 보여 줍니다. 실제 매입가는 순도 감정 후 정해지고, 골드바는 제작비가 붙을 수 있어요.'
+    : '은은 3.75g 기준 고시가입니다. 실버바는 아래 "최저가 찾기"에서 무게별로 비교하세요.';
 }
 
 function renderFinder() {
@@ -442,7 +495,7 @@ function offerCard(q, i) {
       h(
         'p',
         { class: 'muted small' },
-        `가격 기준 ${when(o.quotedAt)}`,
+        `가격 기준 ${o.quotedAt ? when(o.quotedAt) : o.quotedDate ? shortDate(o.quotedDate, true) : '시각 미표기'}`,
         o.url ? ' · ' : '',
         link(o.url, '판매처에서 확인 ↗'),
       ),
@@ -528,7 +581,7 @@ function renderSources() {
     }),
   );
   $('#not-covered').textContent =
-    '자동으로 모으지 못하는 곳: 한국금거래소 소매 매장(koreagoldx.co.kr), KB국민·신한·우리·NH농협 은행 골드바, 동네 금은방. 이곳 가격은 "내가 받은 견적 비교하기"에 넣으면 함께 비교됩니다.';
+    '자동으로 모으지 못하는 곳: KB국민·신한·우리·NH농협 은행 골드바, 한국표준금거래소 본사 시세(해외 접속 차단, 국내에서 실행하면 수집), 개별 동네 금은방. 이런 곳의 가격은 "내가 받은 견적 비교하기"에 넣으면 함께 비교됩니다.';
 }
 
 // ---------- 이벤트 ----------

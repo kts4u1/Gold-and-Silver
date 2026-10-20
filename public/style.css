@@ -382,15 +382,31 @@ tr.is-best td {
 .btn.more[hidden] {
   display: none;
 }
-.mini-table {
-  margin-top: 10px;
+.cell-note {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 400;
+  white-space: normal;
 }
-.mini-table h3 {
-  padding: 14px 16px 6px;
+td.num .cell-note {
+  text-align: right;
 }
-.mini-table p {
-  padding: 0 16px 12px;
-  margin: 0;
+.cell-when {
+  font-size: 0.8rem;
+  color: var(--text-2);
+}
+.badge.inline {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 0.7rem;
+  vertical-align: 1px;
+}
+#shops-best {
+  margin: 0 0 10px;
+}
+#shops-foot {
+  margin-top: 8px;
 }
 
 /* 최저가 찾기 */
@@ -699,6 +715,39 @@ footer p {
 @media (max-width: 520px) {
   body {
     font-size: 14px;
+  }
+  /* 매장 시세 표는 좁은 화면에서 매장별 카드로 */
+  #shops-table thead {
+    display: none;
+  }
+  #shops-table tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--grid);
+  }
+  #shops-table tr:last-child {
+    border-bottom: 0;
+  }
+  #shops-table td {
+    display: block;
+    padding: 0;
+    border: 0;
+    text-align: left;
+    white-space: normal;
+  }
+  #shops-table td:first-child {
+    grid-column: 1 / -1;
+  }
+  #shops-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  #shops-table td.num .cell-note {
+    text-align: left;
   }
   .top .sub {
     display: none;

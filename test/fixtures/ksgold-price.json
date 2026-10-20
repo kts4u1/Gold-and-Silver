@@ -1,0 +1,106 @@
+{
+ "success": true,
+ "data": [
+  {
+   "metal": "gold_24k",
+   "original_metal_type": "gold",
+   "buy_price": 668000,
+   "sell_price": 773000,
+   "market_price": null,
+   "datetime": "2026-10-20 09:49:30",
+   "source": "koreagoldx",
+   "price_changes": {
+    "buy_change": -7000,
+    "sell_change": -14000,
+    "buy_change_percent": -1.04,
+    "sell_change_percent": -1.77,
+    "price_grade": "down"
+   },
+   "previous_prices": {
+    "prev_buy_price": 674000,
+    "prev_sell_price": 789000
+   }
+  },
+  {
+   "metal": "gold_14k",
+   "original_metal_type": "gold14k",
+   "buy_price": 381200,
+   "sell_price": 439750,
+   "market_price": null,
+   "datetime": "2026-10-20 09:49:30",
+   "source": "koreagoldx",
+   "price_changes": {
+    "buy_change": -4000,
+    "sell_change": -7980,
+    "buy_change_percent": -1.04,
+    "sell_change_percent": -1.77,
+    "price_grade": "down"
+   },
+   "previous_prices": {
+    "prev_buy_price": 384200,
+    "prev_sell_price": 449730
+   }
+  },
+  {
+   "metal": "gold_18k",
+   "original_metal_type": "gold18k",
+   "buy_price": 491300,
+   "sell_price": 567625,
+   "market_price": null,
+   "datetime": "2026-10-20 09:49:30",
+   "source": "koreagoldx",
+   "price_changes": {
+    "buy_change": -5100,
+    "sell_change": -10290,
+    "buy_change_percent": -1.03,
+    "sell_change_percent": -1.77,
+    "price_grade": "down"
+   },
+   "previous_prices": {
+    "prev_buy_price": 495400,
+    "prev_sell_price": 579915
+   }
+  },
+  {
+   "metal": "platinum",
+   "original_metal_type": "platinum",
+   "buy_price": 247000,
+   "sell_price": 304000,
+   "market_price": null,
+   "datetime": "2026-10-20 09:49:30",
+   "source": "koreagoldx",
+   "price_changes": {
+    "buy_change": -2000,
+    "sell_change": -3000,
+    "buy_change_percent": -0.8,
+    "sell_change_percent": -0.98,
+    "price_grade": "down"
+   },
+   "previous_prices": {
+    "prev_buy_price": 249000,
+    "prev_sell_price": 307000
+   }
+  },
+  {
+   "metal": "silver",
+   "original_metal_type": "silver",
+   "buy_price": 8480,
+   "sell_price": 10190,
+   "market_price": null,
+   "datetime": "2026-10-20 09:49:30",
+   "source": "koreagoldx",
+   "price_changes": {
+    "buy_change": -130,
+    "sell_change": -160,
+    "buy_change_percent": -1.51,
+    "sell_change_percent": -1.55,
+    "price_grade": "down"
+   },
+   "previous_prices": {
+    "prev_buy_price": 8610,
+    "prev_sell_price": 10350
+   }
+  }
+ ],
+ "count": 5
+}

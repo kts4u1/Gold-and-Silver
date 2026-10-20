@@ -1,6 +1,9 @@
 // 한국조폐공사 공식 쇼핑몰 (오롯 골드바, 실버바). 가격은 부가세 포함, 금시세는 하루 3회 갱신.
 import { load } from 'cheerio';
 import { fetchText, toNumber } from '../http.js';
+import { cheapestBySize, parseProductWeight } from './util.js';
+
+export { parseProductWeight };
 
 const BASE = 'https://www.koreamint.com';
 export const KOMSCO_URLS = {
@@ -8,15 +11,6 @@ export const KOMSCO_URLS = {
   silver: `${BASE}/goods/category.do?cate=2224`,
   goldPrice: `${BASE}/etc/gold_price_info.do?cate=1877`,
 };
-
-/** "오롯 골드바 1,000g" → 1000, "실버바 1kg" → 1000 */
-export function parseProductWeight(name) {
-  const m = /([\d,.]+)\s*(kg|g)\b/i.exec(name);
-  if (!m) return null;
-  const n = Number(m[1].replace(/,/g, ''));
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return m[2].toLowerCase() === 'kg' ? n * 1000 : n;
-}
 
 /** 상품 목록 페이지에서 {name, sizeG, price} 목록을 읽습니다. */
 export function parseKomscoProducts(html) {
@@ -62,14 +56,7 @@ export function parseKomscoGoldPrice(html) {
 
 /** 같은 중량에 디자인 상품이 여러 개면 가장 싼 것 하나만 남깁니다 (같은 값이면 기본 상품 우선). */
 export function komscoOffers(products, metal, quotedAt) {
-  const bySize = new Map();
-  for (const p of products) {
-    if (p.soldOut) continue;
-    const prev = bySize.get(p.sizeG);
-    const better = !prev || p.price < prev.price || (p.price === prev.price && p.name.length < prev.name.length);
-    if (better) bySize.set(p.sizeG, p);
-  }
-  return [...bySize.values()].map((p) => ({
+  return cheapestBySize(products).map((p) => ({
     id: `komsco-${metal}-${p.sizeG}`,
     channelId: metal === 'gold' ? 'komsco' : 'komsco-silver',
     channelName: '한국조폐공사 쇼핑몰',

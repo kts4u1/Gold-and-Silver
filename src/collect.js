@@ -1,10 +1,15 @@
 // 모든 출처에서 시세와 구매처 가격을 모아 하나로 합칩니다.
 // 출처마다 캐시를 두고, 실패하면 마지막으로 성공한 데이터를 "지연됨" 표시와 함께 돌려줍니다.
 import { spotKrwPerGram } from '../shared/compare.js';
+import { fetchGoldie } from './sources/goldie.js';
+import { fetchGoldmarket } from './sources/goldmarket.js';
 import { fetchHana } from './sources/hana.js';
+import { BUSAN_URL, fetchKgs, fetchKgsBusan } from './sources/kgs.js';
 import { fetchKgx, KGX_PAGE } from './sources/kgx.js';
 import { fetchKomsco, KOMSCO_URLS } from './sources/komsco.js';
+import { fetchKsgold } from './sources/ksgold.js';
 import { fetchNaver } from './sources/naver.js';
+import { fetchSsgold } from './sources/ssgold.js';
 
 const MINUTE = 60 * 1000;
 const RETRY_AFTER_FAILURE_MS = 30 * 1000;
@@ -38,6 +43,49 @@ export const SOURCES = [
     ttlMs: 1 * MINUTE,
     fetch: fetchKgx,
   },
+  // ---- 금은방·금거래소 매장 시세와 쇼핑몰 가격 ----
+  {
+    id: 'ksgold',
+    name: '한국금거래소 고시가 (대한표준금거래소 제공)',
+    url: 'http://www.ksgold.co.kr/price.php',
+    ttlMs: 10 * MINUTE,
+    fetch: fetchKsgold,
+  },
+  {
+    id: 'kgs',
+    name: '한국표준금거래소 (본사 시세·쇼핑몰)',
+    url: 'https://goldgold.co.kr/custom/html/kgs_chart_gold.html',
+    ttlMs: 15 * MINUTE,
+    fetch: fetchKgs,
+  },
+  {
+    id: 'goldmarket',
+    name: '한국금시장거래소 압구정점 (서울 강남)',
+    url: 'https://www.goldmarket.co.kr/',
+    ttlMs: 10 * MINUTE,
+    fetch: fetchGoldmarket,
+  },
+  {
+    id: 'kgs-busan',
+    name: '한국표준금거래소 부산 지점',
+    url: BUSAN_URL,
+    ttlMs: 10 * MINUTE,
+    fetch: fetchKgsBusan,
+  },
+  {
+    id: 'ssgold',
+    name: '삼성금거래소 공식몰',
+    url: 'https://www.ssgold.co.kr/',
+    ttlMs: 15 * MINUTE,
+    fetch: fetchSsgold,
+  },
+  {
+    id: 'goldie',
+    name: '금골디 (제휴 금은방 매입 시세)',
+    url: 'https://www.goldie.co.kr/',
+    ttlMs: 10 * MINUTE,
+    fetch: fetchGoldie,
+  },
 ];
 
 export function createCollector(sources = SOURCES, now = () => Date.now()) {
@@ -68,6 +116,7 @@ export function createCollector(sources = SOURCES, now = () => Date.now()) {
     const results = await Promise.all(sources.map((s) => load(s, force)));
     const market = {};
     const offers = [];
+    const shops = [];
     const statuses = [];
 
     results.forEach((r, i) => {
@@ -75,6 +124,7 @@ export function createCollector(sources = SOURCES, now = () => Date.now()) {
       if (r.data) {
         Object.assign(market, r.data.market);
         offers.push(...r.data.offers);
+        shops.push(...(r.data.shops ?? []));
       }
       statuses.push({
         id: src.id,
@@ -89,7 +139,7 @@ export function createCollector(sources = SOURCES, now = () => Date.now()) {
     });
 
     market.spot = computeSpot(market);
-    return { generatedAt: new Date(now()).toISOString(), market, offers, sources: statuses };
+    return { generatedAt: new Date(now()).toISOString(), market, offers, shops, sources: statuses };
   };
 }
 
