@@ -22,7 +22,12 @@ export function carryOver(current, previous, { now = Date.now(), maxAgeMs = 48 *
     sources: (current.sources ?? []).map((s) => ({ ...s, warnings: [...(s.warnings ?? [])] })),
   };
   const fresh = (iso, limit) => Boolean(iso) && now - Date.parse(iso) <= limit;
-  const ofSource = (list, id) => (list ?? []).filter((x) => (x.source ?? x.chain) === id);
+  // 출처가 정확히 같은 것만 (출처 표시가 없던 옛 데이터는 이어 쓰지 않음)
+  const ofSource = (list, id) => (list ?? []).filter((x) => x.source === id);
+  // 같은 매장인지: 업체·이름·주소가 같으면 같은 매장 (출처 id가 바뀐 옛 데이터와도 겹치지 않게)
+  const branchKey = (b) => `${b.chainName ?? b.chain}|${b.name}|${b.address ?? ''}`;
+  const known = new Set(out.branches.map(branchKey));
+  const notKnown = (b) => !known.has(branchKey(b));
 
   for (const st of out.sources) {
     const prev = previous.sources.find((p) => p.id === st.id);
@@ -32,8 +37,9 @@ export function carryOver(current, previous, { now = Date.now(), maxAgeMs = 48 *
     if (!st.ok && !st.stale && (prev.ok || prev.stale) && fresh(prev.fetchedAt, maxAgeMs)) {
       const shops = ofSource(previous.shops, st.id);
       const offers = ofSource(previous.offers, st.id);
-      const branches = ofSource(previous.branches, st.id);
+      const branches = ofSource(previous.branches, st.id).filter(notKnown);
       if (shops.length || offers.length || branches.length) {
+        for (const b of branches) known.add(branchKey(b));
         out.shops.push(...shops);
         out.offers.push(...offers);
         out.branches.push(...branches);
@@ -46,14 +52,14 @@ export function carryOver(current, previous, { now = Date.now(), maxAgeMs = 48 *
     }
 
     // 2) 시세는 받았지만 지점 목록만 실패: 지점 목록은 잘 바뀌지 않아 더 오래(기본 14일) 이어 씀
-    const current = out.branches.filter((b) => (b.source ?? b.chain) === st.id);
+    const current = out.branches.filter((b) => b.source === st.id);
     const branchFailed = st.warnings.some((w) => /^지점:/.test(w));
     if (!current.length || branchFailed) {
       const at = prev.branchesAt ?? prev.fetchedAt;
-      const known = new Set(current.map((b) => `${b.name}|${b.address ?? ''}`));
       const ids = new Set(out.branches.map((b) => b.id));
-      const missing = ofSource(previous.branches, st.id).filter((b) => !known.has(`${b.name}|${b.address ?? ''}`));
+      const missing = ofSource(previous.branches, st.id).filter(notKnown);
       if (missing.length && fresh(at, branchMaxAgeMs)) {
+        for (const b of missing) known.add(branchKey(b));
         out.branches.push(...missing.map((b) => (ids.has(b.id) ? { ...b, id: `${b.id}-prev` } : b)));
         st.branchesAt = at;
         st.warnings.push(`지점 목록은 이번에 받지 못해 직전 목록(${missing.length}곳)을 보여 줍니다`);
