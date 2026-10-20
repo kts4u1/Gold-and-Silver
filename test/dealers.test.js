@@ -193,6 +193,14 @@ describe('지점 목록', () => {
     });
   });
 
+  it('한국공인금거래소: "[사용안함]"으로 표시된 지점은 뺍니다', () => {
+    const row = (name, addr) => `<tr><td>1</td><td>서울</td><td>${name}</td><td>${addr}</td><td>02-477-9894</td></tr>`;
+    const { branches } = parseKaggoldBranches(
+      `<table>${row('천호점', '[사용안함]서울특별시 강동구 천호대로 997')}${row('강동천호지점', '서울특별시 강동구 천호대로 1024')}</table>`,
+    );
+    assert.deepEqual(branches.map((b) => b.name), ['강동천호지점']);
+  });
+
   it('삼이금거래소 8곳', () => {
     const list = parseSamegoldBranches(tokens('samegold-branches.html'));
     assert.equal(list.length, 8);

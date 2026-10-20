@@ -126,6 +126,7 @@ export async function fetchKgs() {
       channelName: '한국표준금거래소 쇼핑몰',
       vendor: '한국표준금거래소',
       summary: '온라인 주문, 택배 배송',
+      reach: 'online',
       url: SHOP_LIST,
       source: 'kgs',
       quotedAt: new Date().toISOString(),
@@ -137,7 +138,41 @@ export async function fetchKgs() {
   return { market: {}, shops, offers, warnings };
 }
 
+// 부산 지점 홈페이지가 안내하는 매장 (상세 주소는 홈페이지에 없어 구 단위로만 위치를 잡습니다)
+const BUSAN_STORES = [
+  ['동래점', '부산 동래구'],
+  ['남포점', '부산 중구 남포동'],
+  ['하단점', '부산 사하구 하단동'],
+  ['해운대점', '부산 해운대구'],
+  ['수영점', '부산 수영구'],
+];
+
+export function kgsBusanBranches() {
+  return BUSAN_STORES.map(([name, area], i) => ({
+    id: `kgs-busan-${i + 1}`,
+    chain: 'kgs-busan',
+    chainName: '한국표준금거래소 부산',
+    source: 'kgs-busan',
+    quoteId: 'kgs-busan',
+    url: BUSAN_URL,
+    name,
+    address: null,
+    area,
+    phone: null,
+    hours: null,
+    opening: false,
+    region: '부산',
+  }));
+}
+
 export async function fetchKgsBusan() {
-  const shop = parseKgsBusan(await fetchText(BUSAN_URL));
-  return { market: {}, shops: [shop], offers: [shopQuoteOffer(shop)].filter(Boolean) };
+  const html = await fetchText(BUSAN_URL);
+  const branches = kgsBusanBranches();
+  try {
+    const shop = parseKgsBusan(html);
+    return { market: {}, shops: [shop], offers: [shopQuoteOffer(shop)].filter(Boolean), branches };
+  } catch (err) {
+    // 오늘 시세가 아직 안 올라온 날에도 매장 위치는 보여 줍니다
+    return { market: {}, shops: [], offers: [], branches, warnings: [err.message] };
+  }
 }

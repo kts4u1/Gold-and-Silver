@@ -1,6 +1,7 @@
 // 모든 출처에서 시세와 구매처 가격을 모아 하나로 합칩니다.
 // 출처마다 캐시를 두고, 실패하면 마지막으로 성공한 데이터를 "지연됨" 표시와 함께 돌려줍니다.
 import { GRAMS_PER_DON, spotKrwPerGram } from '../shared/compare.js';
+import { locateBranch } from '../shared/location.js';
 import { DEALERS, fetchDealer } from './sources/dealers.js';
 import { fetchGoldie } from './sources/goldie.js';
 import { fetchGoldmarket } from './sources/goldmarket.js';
@@ -135,7 +136,7 @@ export function createCollector(sources = SOURCES, now = () => Date.now()) {
         Object.assign(market, r.data.market);
         offers.push(...r.data.offers);
         shops.push(...(r.data.shops ?? []));
-        branches.push(...(r.data.branches ?? []));
+        branches.push(...(r.data.branches ?? []).map((b) => ({ source: src.id, quoteId: b.chain ?? src.id, ...b })));
       }
       statuses.push({
         id: src.id,
@@ -160,7 +161,8 @@ export function createCollector(sources = SOURCES, now = () => Date.now()) {
       market,
       offers: clean.offers,
       shops: clean.shops,
-      branches,
+      // 매장마다 시·도와 시·군·구를 채워 "내 주변" 거리 계산에 씁니다
+      branches: branches.map(locateBranch),
       sources: statuses,
     };
   };

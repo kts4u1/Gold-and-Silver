@@ -117,6 +117,7 @@ export function hanaOffers(product, table, date) {
       sizeG: b.sizeG,
       kind: 'fixed',
       summary: '은행 영업점 신청 · 방문 수령',
+      reach: 'nationwide',
       unitPrice: b.price,
       vatIncluded: false,
       sellPrice: sell ? sell.price : null,

@@ -2,15 +2,17 @@
 // 시세를 한 번 모아서 data/prices.json으로 저장하고, 화면 파일을 함께 복사합니다.
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { carryOver } from './carryover.js';
 
 const STATIC_META = '<meta name="data-mode" content="static" />';
 
 /**
- * @param {{ rootDir: string, outDir: string, collect: () => Promise<any> }} opts
- * @returns {Promise<{ offers: number, shops: number, sources: {id: string, ok: boolean}[] }>}
+ * @param {{ rootDir: string, outDir: string, collect: () => Promise<any>, previous?: object|null, now?: number }} opts
+ *   previous: 직전에 배포한 data/prices.json. 이번에 실패한 출처는 이 값을 이어 씁니다.
+ * @returns {Promise<{ offers: number, shops: number, branches: number, sources: {id: string, ok: boolean, stale: boolean}[] }>}
  */
-export async function buildStatic({ rootDir, outDir, collect }) {
-  const data = await collect({ force: true });
+export async function buildStatic({ rootDir, outDir, collect, previous = null, now = Date.now() }) {
+  const data = carryOver(await collect({ force: true }), previous, { now });
 
   // 비교할 가격이 하나도 없으면 빈 사이트로 덮어쓰지 않도록 실패 처리합니다
   if (!data.offers?.length) {
@@ -34,6 +36,7 @@ export async function buildStatic({ rootDir, outDir, collect }) {
   return {
     offers: data.offers.length,
     shops: data.shops?.length ?? 0,
-    sources: data.sources.map((s) => ({ id: s.id, ok: s.ok })),
+    branches: data.branches?.length ?? 0,
+    sources: data.sources.map((s) => ({ id: s.id, ok: s.ok, stale: Boolean(s.stale) })),
   };
 }

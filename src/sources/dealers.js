@@ -286,6 +286,7 @@ export function parseKaggoldBranches(html) {
   $('tr').each((_, tr) => {
     const cells = $(tr).children('td').toArray().map((c) => $(c).text().replace(/\s+/g, ' ').trim());
     if (cells.length < 5 || !PHONE_RE.test(cells[4])) return;
+    if (/사용\s*안\s*함/.test(`${cells[2]} ${cells[3]}`)) return; // 업체가 "[사용안함]"으로 표시한 (문 닫은) 지점
     out.push({
       name: cleanName(cells[2]),
       address: cells[3],
@@ -414,6 +415,7 @@ export const DEALERS = [
     url: 'http://www.jongrogx.com/',
     quote: 'table',
     branches: { url: 'http://www.jongrogx.com/bbs/board.php?bo_table=store2', kind: 'tokens', parse: parseJongroBranches },
+    stores: [{ name: '종로 본점', address: '서울 종로구 돈화문로6나길 45 보석백화점 5층 502호', phone: '02-765-9909' }],
   },
   {
     id: 'anseong',
@@ -421,6 +423,7 @@ export const DEALERS = [
     region: '경기 안성시 공도읍 · 031-647-8648',
     url: 'https://anseonggold.co.kr/gold-price',
     quote: 'table',
+    stores: [{ name: '안성금거래소 (안성공도점)', address: '경기 안성시 공도읍 진건중길 4', phone: '031-647-8648' }],
   },
   {
     id: 'jungang',
@@ -435,6 +438,7 @@ export const DEALERS = [
     region: '서울 종로구 봉익동',
     url: 'https://www.k-goldsilver.com/',
     quote: 'kgoldsilver',
+    stores: [{ name: 'K-금은거래소 (종로 봉익동)', address: '서울 종로구 봉익동 153 골드유빌딩 306호', phone: null }],
   },
   {
     id: 'samegold',
@@ -502,15 +506,18 @@ export function quoteToShop(def, q, tokens) {
   return shop;
 }
 
-/** 지점 목록에 공통 항목을 채웁니다. */
-function finishBranches(def, list) {
+/**
+ * 지점 목록에 공통 항목을 채웁니다.
+ * quoteId: 이 매장에 붙일 가격(매장 시세 id). 지점별 시세를 따로 공개하지 않아 본사 고시가를 씁니다.
+ */
+export function finishBranches(def, list) {
   const seen = new Set();
   const out = [];
   for (const b of list) {
     const key = `${b.name}|${b.address ?? ''}`;
     if (!b.name || seen.has(key)) continue;
     seen.add(key);
-    out.push({ id: `${def.id}-${out.length + 1}`, chain: def.id, chainName: def.name, url: def.url, ...b });
+    out.push({ id: `${def.id}-${out.length + 1}`, chain: def.id, chainName: def.name, url: def.url, source: def.id, quoteId: def.id, ...b });
   }
   return out;
 }
@@ -576,5 +583,7 @@ export async function fetchDealer(def) {
   else warnings.push(`지점: ${branchRes.reason?.message ?? branchRes.reason}`);
 
   if (!shops.length && !offers.length && !branches.length) throw new Error(warnings.join(' · ') || `${def.name} 데이터를 받지 못했습니다`);
+  // 홈페이지 아래쪽에 적힌 매장(본점) 주소. 지점 목록에 없을 때만 더합니다.
+  if (def.stores?.length) branches = finishBranches(def, [...branches, ...def.stores.map((s) => ({ hours: null, opening: false, region: null, ...s }))]);
   return { market: {}, shops, offers, branches, warnings };
 }

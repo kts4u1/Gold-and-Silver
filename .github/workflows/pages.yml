@@ -33,9 +33,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - id: pages
+        uses: actions/configure-pages@v5
       - name: 시세 수집 후 정적 사이트 만들기
+        # 이번에 열리지 않은 출처는 지금 배포된 사이트의 값을 이어 씁니다 (최대 48시간)
+        env:
+          PREVIOUS_DATA_URL: ${{ steps.pages.outputs.base_url }}/data/prices.json
         run: node scripts/build-static.js dist
-      - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
