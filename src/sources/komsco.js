@@ -67,6 +67,7 @@ export function komscoOffers(products, metal, quotedAt) {
     sizeG: p.sizeG,
     kind: 'fixed',
     summary: `${p.name} · 온라인 주문, 택배 배송`,
+    reach: 'online',
     unitPrice: p.price,
     vatIncluded: true,
     sellPrice: null,
@@ -93,7 +94,15 @@ export async function fetchKomsco() {
     ...komscoOffers(parseKomscoProducts(goldHtml), 'gold', goldPrice?.at ?? fetchedAt),
     ...komscoOffers(parseKomscoProducts(silverHtml), 'silver', fetchedAt),
   ];
-  if (!offers.length) throw new Error('조폐공사 쇼핑몰에서 판매 중인 골드바·실버바를 찾지 못했습니다');
+  if (!offers.length) {
+    // 상품은 있는데 가격이 모두 0원이면 판매 중지·품절 상태입니다
+    const listed = (goldHtml.match(/class="item-title"/g) ?? []).length + (silverHtml.match(/class="item-title"/g) ?? []).length;
+    throw new Error(
+      listed
+        ? `조폐공사 쇼핑몰에 상품 ${listed}개가 있지만 가격이 0원으로 표시되어 있어 비교에서 뺐습니다 (판매 중지·품절로 보임)`
+        : '조폐공사 쇼핑몰에서 판매 중인 골드바·실버바를 찾지 못했습니다',
+    );
+  }
   return { market: { komsco: goldPrice }, offers };
 }
 

@@ -44,11 +44,19 @@ describe('정적 사이트 만들기', () => {
       collect: async (opts) => ((forced = opts.force), sample),
     });
     assert.equal(forced, true); // 캐시 없이 새로 가져옴
-    assert.deepEqual(result, { offers: 2, shops: 1, sources: [{ id: 'x', ok: true }, { id: 'y', ok: false }] });
+    assert.deepEqual(result, {
+      offers: 2,
+      shops: 1,
+      branches: 0,
+      sources: [
+        { id: 'x', ok: true, stale: false },
+        { id: 'y', ok: false, stale: false },
+      ],
+    });
 
     const data = JSON.parse(await fs.readFile(path.join(outDir, 'data/prices.json'), 'utf8'));
     assert.equal(data.generatedAt, sample.generatedAt);
-    for (const f of ['index.html', 'app.js', 'chart.js', 'style.css', 'manifest.webmanifest', 'icon.svg', 'shared/compare.js', '.nojekyll']) {
+    for (const f of ['index.html', 'app.js', 'chart.js', 'style.css', 'manifest.webmanifest', 'icon.svg', 'shared/compare.js', 'shared/location.js', 'shared/districts.js', '.nojekyll']) {
       await fs.access(path.join(outDir, f));
     }
   });
@@ -64,6 +72,21 @@ describe('정적 사이트 만들기', () => {
     const manifest = JSON.parse(await fs.readFile(path.join(outDir, 'manifest.webmanifest'), 'utf8'));
     assert.equal(manifest.start_url, './');
     assert.equal(manifest.icons[0].src, 'icon.svg');
+  });
+
+  it('이번에 실패한 출처는 직전 배포본 값을 이어 씁니다', async () => {
+    const outDir = await tmp();
+    const previous = {
+      generatedAt: '2026-10-20T02:45:00.000Z',
+      market: {},
+      offers: [{ id: 'y-offer', source: 'y' }],
+      shops: [{ id: 'y-shop', source: 'y' }],
+      branches: [],
+      sources: [{ id: 'y', ok: true, fetchedAt: '2026-10-20T02:45:00.000Z', warnings: [] }],
+    };
+    const result = await buildStatic({ rootDir, outDir, collect: async () => sample, previous, now: Date.parse('2026-10-20T03:00:00Z') });
+    assert.equal(result.offers, 3);
+    assert.deepEqual(result.sources[1], { id: 'y', ok: false, stale: true });
   });
 
   it('가격이 하나도 없으면 사이트를 만들지 않고 이유를 알려 줍니다', async () => {

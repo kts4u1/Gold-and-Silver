@@ -45,6 +45,7 @@ export function krxOffers(krxGold) {
     metal: 'gold',
     sizeG,
     kind: 'krx',
+    reach: 'nationwide', // 증권사 계좌로 사서 실물 인출 (전국)
     summary: '증권사 계좌로 사서 실물로 인출',
     pricePerGram: krxGold.value,
     quotedAt: krxGold.at,

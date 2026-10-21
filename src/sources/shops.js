@@ -23,6 +23,7 @@ export function shopQuoteOffer(shop) {
     metal: 'gold',
     sizeG: 3.75,
     kind: 'fixed',
+    reach: 'stores', // 이 업체 매장에 가서 사는 가격
     summary: `${shop.region} · 매장 고시가 (순금 1돈)`,
     unitPrice: gold.buy,
     vatIncluded: shop.buyVatIncluded,
@@ -38,10 +39,11 @@ export function shopQuoteOffer(shop) {
   };
 }
 
-/** 쇼핑몰 상품 목록을 비교용 구매처로 바꿉니다. (가격은 부가세 포함 소비자가) */
+/** 쇼핑몰 상품 목록을 비교용 구매처로 바꿉니다. (가격은 부가세 포함 소비자가)
+ *  reach: 어디서 살 수 있는지 — 'online'(택배 배송) | 'stores'(그 업체 매장 방문) | 'nationwide'(전국 은행·증권사) */
 export function productOffers(
   products,
-  { id, channelName, vendor, summary, url, source, quotedAt = null, quotedDate = null, notes = [] },
+  { id, channelName, vendor, summary, url, source, quotedAt = null, quotedDate = null, notes = [], reach = 'stores' },
 ) {
   return products.map((p) => ({
     id: `${id}-${p.metal}-${p.sizeG}`,
@@ -52,6 +54,7 @@ export function productOffers(
     metal: p.metal,
     sizeG: p.sizeG,
     kind: 'fixed',
+    reach, // 'online' = 택배 배송, 'stores' = 매장 방문
     summary: `${p.name} · ${summary}`,
     unitPrice: p.price,
     vatIncluded: true,

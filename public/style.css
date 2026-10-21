@@ -686,6 +686,16 @@ details.settings[open] > summary {
   align-items: flex-start;
   font-size: 0.88rem;
 }
+.sources-group {
+  display: block;
+}
+.sources-group summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.sources-group .sources {
+  margin-top: 8px;
+}
 .status {
   flex: none;
   font-size: 0.75rem;
@@ -774,21 +784,44 @@ footer p {
   }
 }
 
-/* 전국 매장 찾기 */
-.branch-controls {
+/* 내 주변 최저가 매장 */
+.loc-chip {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 45vw;
+}
+.loc-chip:hover {
+  border-color: var(--accent);
+}
+.loc-controls {
   display: grid;
-  grid-template-columns: 1fr 1fr 2fr;
+  gap: 12px;
+}
+.loc-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
   gap: 12px;
   align-items: end;
 }
-.branch-controls label {
+.loc-row + .loc-row {
+  grid-template-columns: 1fr 1fr 1fr 2fr;
+}
+.loc-controls label {
   display: grid;
   gap: 4px;
   font-size: 0.8rem;
   color: var(--text-2);
 }
-.branch-controls select,
-.branch-controls input {
+.loc-controls select,
+.loc-controls input {
   border: 1px solid var(--border);
   background: var(--surface);
   border-radius: 10px;
@@ -796,6 +829,46 @@ footer p {
   min-height: 40px;
   width: 100%;
   font-size: 0.95rem;
+}
+.loc-controls select:disabled {
+  opacity: 0.6;
+}
+#loc-gps {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  white-space: nowrap;
+}
+#loc-status {
+  margin: 0;
+}
+#loc-status:empty {
+  display: none;
+}
+.nearby-summary .stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.stat {
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.stat .label {
+  font-size: 0.78rem;
+  color: var(--text-2);
+}
+.stat-main {
+  font-size: 1.2rem;
+  margin: 2px 0;
+  font-variant-numeric: tabular-nums;
+}
+.list-count {
+  margin: 12px 0 8px;
 }
 .branch-list {
   list-style: none;
@@ -808,11 +881,29 @@ footer p {
 .branch {
   padding: 12px 14px;
 }
+.branch.is-best {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
 .branch-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+.branch-head strong {
+  margin-right: auto;
+}
+.branch-price {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 6px;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+.branch-price strong {
+  font-size: 1.05rem;
 }
 .branch-meta {
   font-size: 0.85rem;
@@ -826,11 +917,58 @@ footer p {
   margin-top: 8px;
   font-size: 0.85rem;
 }
+.badge.sell {
+  background: var(--good);
+  color: var(--on-accent);
+}
+.more-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.more-row .btn.more {
+  margin: 12px 0 0;
+}
+.cell-note.near {
+  color: var(--good);
+  font-weight: 600;
+}
+.offer-reach {
+  margin: 6px 0 0 36px;
+  font-size: 0.82rem;
+  color: var(--good);
+  font-weight: 600;
+}
+.offer-reach.far {
+  color: var(--muted);
+  font-weight: 400;
+}
+.nearby-only {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 8px;
+  font-size: 0.9rem;
+}
+.nearby-only[hidden] {
+  display: none;
+}
+.nearby-only input {
+  width: 18px;
+  height: 18px;
+}
 @media (max-width: 640px) {
-  .branch-controls {
+  .loc-row,
+  .loc-row + .loc-row {
     grid-template-columns: 1fr 1fr;
   }
-  .branch-controls .grow {
+  #loc-gps,
+  .loc-controls .grow {
     grid-column: 1 / -1;
+    justify-content: center;
+  }
+  .offer-reach {
+    margin-left: 0;
   }
 }

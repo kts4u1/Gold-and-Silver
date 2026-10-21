@@ -72,5 +72,21 @@ export async function fetchGoldmarket() {
       notes: ['서울 강남구 압구정로28길 14 매장 · 재고는 매장에 확인하세요'],
     }),
   ].filter(Boolean);
-  return { market: {}, shops: [shop], offers };
+  const branches = [
+    {
+      id: 'goldmarket-1',
+      chain: 'goldmarket',
+      chainName: '한국금시장거래소',
+      source: 'goldmarket',
+      quoteId: shop.id,
+      url: URL,
+      name: '압구정점',
+      address: '서울 강남구 압구정로28길 14',
+      phone: null,
+      hours: null,
+      opening: false,
+      region: '서울',
+    },
+  ];
+  return { market: {}, shops: [shop], offers, branches };
 }

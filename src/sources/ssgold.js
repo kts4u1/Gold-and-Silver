@@ -20,6 +20,7 @@ export async function fetchSsgold() {
       channelName: '삼성금거래소 공식몰',
       vendor: '삼성금거래소',
       summary: '온라인 주문, 택배 배송',
+      reach: 'online',
       url: URL,
       source: 'ssgold',
       quotedAt: new Date().toISOString(),

@@ -1,18 +1,22 @@
 // 모든 출처에서 시세와 구매처 가격을 모아 하나로 합칩니다.
 // 출처마다 캐시를 두고, 실패하면 마지막으로 성공한 데이터를 "지연됨" 표시와 함께 돌려줍니다.
 import { GRAMS_PER_DON, spotKrwPerGram } from '../shared/compare.js';
-import { DEALERS, fetchDealer } from './sources/dealers.js';
+import { locateBranch } from '../shared/location.js';
+import { DEALERS, fetchDealer, fetchDealerStores } from './sources/dealers.js';
 import { fetchGoldie } from './sources/goldie.js';
 import { fetchGoldmarket } from './sources/goldmarket.js';
 import { fetchHana } from './sources/hana.js';
-import { BUSAN_URL, fetchKgs, fetchKgsBusan } from './sources/kgs.js';
+import { BUSAN_STORES_URL, BUSAN_URL, fetchKgs, fetchKgsBusan, fetchKgsBusanStores } from './sources/kgs.js';
 import { fetchKgx, KGX_PAGE } from './sources/kgx.js';
 import { fetchKomsco, KOMSCO_URLS } from './sources/komsco.js';
-import { fetchKsgold } from './sources/ksgold.js';
+import { fetchKgxStores, fetchKsgold, KGX_STORES_URL } from './sources/ksgold.js';
 import { fetchNaver } from './sources/naver.js';
 import { fetchSsgold } from './sources/ssgold.js';
 
 const MINUTE = 60 * 1000;
+const HOUR = 60 * MINUTE;
+// 지점 목록은 잘 바뀌지 않아 하루에 한 번 정도만 받습니다 (새로고침해도 12시간 안에는 다시 받지 않음)
+const STORE_LIST = { ttlMs: 24 * HOUR, minIntervalMs: 12 * HOUR };
 const RETRY_AFTER_FAILURE_MS = 30 * 1000;
 
 export const SOURCES = [
@@ -87,24 +91,58 @@ export const SOURCES = [
     ttlMs: 10 * MINUTE,
     fetch: fetchGoldie,
   },
-  // ---- 금거래소·금은방 사업자 홈페이지 (시세 + 골드바 판매가 + 지점 목록) ----
+  // ---- 금거래소·금은방 사업자 홈페이지 (시세 + 골드바·실버바 판매가) ----
   ...DEALERS.map((def) => ({
     id: def.id,
-    name: `${def.name}${def.quote === 'gbk' ? '' : ' (시세·판매가·지점)'}`,
-    url: def.url,
+    name: `${def.name} ${def.quote === 'gbk' ? '' : '(오늘 시세)'}`.trim(),
+    url: def.quoteUrl ?? def.url,
     ttlMs: 15 * MINUTE,
     fetch: () => fetchDealer(def),
   })),
+  // ---- 매장 목록 (내 주변 매장 찾기용) ----
+  {
+    id: 'kgx-stores',
+    name: '한국금거래소 가맹점·대한표준금거래소 매장 목록',
+    url: KGX_STORES_URL,
+    ...STORE_LIST,
+    fetch: fetchKgxStores,
+  },
+  {
+    id: 'kgs-busan-stores',
+    name: '한국표준금거래소 부산 매장 목록',
+    url: BUSAN_STORES_URL,
+    ...STORE_LIST,
+    fetch: fetchKgsBusanStores,
+  },
+  ...DEALERS.filter((def) => def.branches || def.stores).map((def) => ({
+    id: `${def.id}-stores`,
+    name: `${def.name} 매장 목록`,
+    url: def.branches?.url ?? def.url,
+    ...STORE_LIST,
+    fetch: () => fetchDealerStores(def),
+  })),
 ];
 
-export function createCollector(sources = SOURCES, now = () => Date.now()) {
+/**
+ * @param {Array} sources
+ * @param {() => number} now
+ * @param {{ previous?: object|null }} [opts]
+ *   previous: 직전에 배포한 데이터. 지점 목록처럼 천천히 갱신하는 출처(ttlMs 1시간 이상)는
+ *   직전 값이 아직 유효하면 다시 받지 않고 그대로 씁니다 (사이트에 요청을 덜 보내려고).
+ */
+export function createCollector(sources = SOURCES, now = () => Date.now(), { previous = null } = {}) {
   const state = new Map();
+  for (const src of sources) {
+    const seeded = seedFromPrevious(src, previous, now());
+    if (seeded) state.set(src.id, seeded);
+  }
 
   function load(src, force) {
     const st = state.get(src.id) ?? {};
     if (st.inflight) return st.inflight;
     const age = now() - (st.fetchedAt ?? 0);
-    if (!force && st.data && age < src.ttlMs) return Promise.resolve(st);
+    // 새로고침(force)이어도 minIntervalMs 안에는 다시 받지 않습니다 (지점 목록 등)
+    if (st.data && age < (force ? (src.minIntervalMs ?? 0) : src.ttlMs)) return Promise.resolve(st);
     if (!force && st.failedAt && now() - st.failedAt < RETRY_AFTER_FAILURE_MS) return Promise.resolve(st);
 
     const inflight = Promise.resolve()
@@ -135,7 +173,7 @@ export function createCollector(sources = SOURCES, now = () => Date.now()) {
         Object.assign(market, r.data.market);
         offers.push(...r.data.offers);
         shops.push(...(r.data.shops ?? []));
-        branches.push(...(r.data.branches ?? []));
+        branches.push(...(r.data.branches ?? []).map((b) => ({ source: src.id, quoteId: b.chain ?? src.id, ...b })));
       }
       statuses.push({
         id: src.id,
@@ -160,10 +198,25 @@ export function createCollector(sources = SOURCES, now = () => Date.now()) {
       market,
       offers: clean.offers,
       shops: clean.shops,
-      branches,
+      // 매장마다 시·도와 시·군·구를 채워 "내 주변" 거리 계산에 씁니다
+      branches: branches.map(locateBranch),
       sources: statuses,
     };
   };
+}
+
+const SLOW_TTL_MS = 60 * MINUTE;
+
+/** 직전 배포 데이터에서 천천히 갱신하는 출처의 값을 꺼냅니다. 아직 유효하지 않으면 null */
+export function seedFromPrevious(src, previous, nowMs) {
+  if (!previous || src.ttlMs < SLOW_TTL_MS) return null;
+  const st = previous.sources?.find((s) => s.id === src.id);
+  const at = Date.parse(st?.fetchedAt ?? '');
+  if (!st || !(st.ok || st.stale) || !(nowMs - at < src.ttlMs)) return null;
+  const mine = (list) => (list ?? []).filter((x) => x.source === src.id);
+  const data = { market: {}, shops: mine(previous.shops), offers: mine(previous.offers), branches: mine(previous.branches), warnings: st.warnings ?? [] };
+  if (!data.shops.length && !data.offers.length && !data.branches.length) return null;
+  return { data, fetchedAt: at, error: st.stale ? st.error : null };
 }
 
 /**
